@@ -33,6 +33,7 @@ The application's architecture will be organized in the following manner, with t
     - Notification preferences and customization.
 
 System architecture diagram:
+![Screenshot](diagrams/system_arhitecture_diagram.png)
 
 
 ### 3. Choose Technology Stack and Communication Patterns:
