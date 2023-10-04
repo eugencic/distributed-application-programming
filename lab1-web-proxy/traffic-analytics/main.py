@@ -1,26 +1,79 @@
-from flask import Flask
-
+import grpc
+from concurrent import futures
 import traffic_pb2
 import traffic_pb2_grpc
-import grpc
+import psycopg2.pool
+from datetime import datetime
 
-app = Flask("analytics-service")
+print("Starting the server...")
 
-from concurrent import futures
+try:
+    conn = psycopg2.connect(
+        dbname='traffic-analytics-db',
+        user='postgres',
+        password='397777',
+        host='localhost',
+        port='5432'
+    )
+    print("Connection to the traffic analytics database is successful!")
+    conn.close()
+except Exception as e:
+    print(f"Error connecting to the traffic analytics database: {e}")
+
+db_pool = psycopg2.pool.SimpleConnectionPool(
+    minconn=1,
+    maxconn=10,
+    dbname='traffic-analytics-db',
+    user='postgres',
+    password='397777',
+    host='localhost',
+    port='5432'
+)
 
 
 class TrafficAnalyzerServicer(traffic_pb2_grpc.TrafficAnalyzerServicer):
     def ReceiveData(self, request, context):
-        print("Request: ")
+        print("New upcoming data: ")
         print(request)
-        print("Intersection ")
-        print(request.intersection_id)
         response = traffic_pb2.TrafficDataReceiveResponse()
-        response.message = f"{request.intersection_id} {request.signal_status_1}"
+        response.message = f"Traffic data for intersection nr.{request.intersection_id} received successfully."
+        return response
+
+    def GetTodayStatistics(self, request, context):
+        response = traffic_pb2.TrafficAnalytics(
+            intersection_id=request.intersection_id,
+            timestamp=datetime.now().isoformat(),
+            average_vehicle_count=45.0,
+            traffic_density="Moderate",
+            peak_hours=["07:00 AM - 09:00 AM"],
+            incidents=1
+        )
+        return response
+
+    def GetLastWeekStatistics(self, request, context):
+        response = traffic_pb2.TrafficAnalytics(
+            intersection_id=request.intersection_id,
+            timestamp=datetime.now().isoformat(),
+            average_vehicle_count=40.0,
+            traffic_density="Low",
+            peak_hours=["08:00 AM - 10:00 AM"],
+            incidents=0
+        )
+        return response
+
+    def GetNextWeekPredictions(self, request, context):
+        response = traffic_pb2.TrafficAnalytics(
+            intersection_id=request.intersection_id,
+            timestamp=datetime.now().isoformat(),
+            average_vehicle_count=50.0,
+            traffic_density="Moderate",
+            peak_hours=["07:30 AM - 09:30 AM"],
+            incidents=2
+        )
         return response
 
 
-def serve():
+def start():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_pb2_grpc.add_TrafficAnalyzerServicer_to_server(TrafficAnalyzerServicer(), server)
     server.add_insecure_port("localhost:8080")
@@ -29,22 +82,4 @@ def serve():
 
 
 if __name__ == '__main__':
-    serve()
-
-# @app.route('/')
-# def home():
-#     return 'Hello, World!'
-#
-#
-# @app.route('/api/analytics/receive-data', methods=['POST', 'GET'])
-# def print_data():
-#     data = request.get_json()  # Assumes the incoming data is in JSON format
-#     if data:
-#         print("Received data:", data)
-#         return 'Data received and printed!'
-#     else:
-#         return 'No data received.'
-#
-#
-# if __name__ == '__main__':
-#     app.run(port=8080)
+    start()

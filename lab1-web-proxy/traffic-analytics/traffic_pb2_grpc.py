@@ -19,12 +19,45 @@ class TrafficAnalyzerStub(object):
                 request_serializer=traffic__pb2.TrafficData.SerializeToString,
                 response_deserializer=traffic__pb2.TrafficDataReceiveResponse.FromString,
                 )
+        self.GetTodayStatistics = channel.unary_unary(
+                '/main.TrafficAnalyzer/GetTodayStatistics',
+                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
+                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                )
+        self.GetLastWeekStatistics = channel.unary_unary(
+                '/main.TrafficAnalyzer/GetLastWeekStatistics',
+                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
+                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                )
+        self.GetNextWeekPredictions = channel.unary_unary(
+                '/main.TrafficAnalyzer/GetNextWeekPredictions',
+                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
+                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                )
 
 
 class TrafficAnalyzerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReceiveData(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTodayStatistics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetLastWeekStatistics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetNextWeekPredictions(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -37,6 +70,21 @@ def add_TrafficAnalyzerServicer_to_server(servicer, server):
                     servicer.ReceiveData,
                     request_deserializer=traffic__pb2.TrafficData.FromString,
                     response_serializer=traffic__pb2.TrafficDataReceiveResponse.SerializeToString,
+            ),
+            'GetTodayStatistics': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTodayStatistics,
+                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
+                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
+            ),
+            'GetLastWeekStatistics': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetLastWeekStatistics,
+                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
+                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
+            ),
+            'GetNextWeekPredictions': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetNextWeekPredictions,
+                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
+                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -62,5 +110,56 @@ class TrafficAnalyzer(object):
         return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/ReceiveData',
             traffic__pb2.TrafficData.SerializeToString,
             traffic__pb2.TrafficDataReceiveResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetTodayStatistics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetTodayStatistics',
+            traffic__pb2.IntersectionRequest.SerializeToString,
+            traffic__pb2.TrafficAnalytics.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetLastWeekStatistics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetLastWeekStatistics',
+            traffic__pb2.IntersectionRequest.SerializeToString,
+            traffic__pb2.TrafficAnalytics.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetNextWeekPredictions(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetNextWeekPredictions',
+            traffic__pb2.IntersectionRequest.SerializeToString,
+            traffic__pb2.TrafficAnalytics.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
