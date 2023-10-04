@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package main;
+
+service TrafficAnalyzer {
+  rpc ReceiveData (TrafficData) returns (TrafficDataReceiveResponse);
+}
+
+message TrafficData {
+  int32 intersection_id = 1;
+  int32 signal_status_1 = 2;
+  int32 vehicle_count = 3;
+  string incident = 4;
+  string date = 5;
+  string time = 6;
+}
+
+message TrafficDataReceiveResponse {
+  string message = 1;
+}
