@@ -4,8 +4,7 @@ import traffic_pb2
 import traffic_pb2_grpc
 import psycopg2.pool
 from datetime import datetime
-
-print("Starting the server...")
+from dateutil.relativedelta import relativedelta
 
 try:
     conn = psycopg2.connect(
@@ -33,44 +32,247 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
 
 class TrafficAnalyzerServicer(traffic_pb2_grpc.TrafficAnalyzerServicer):
     def ReceiveData(self, request, context):
-        print("New upcoming data: ")
-        print(request)
-        response = traffic_pb2.TrafficDataReceiveResponse()
-        response.message = f"Traffic data for intersection nr.{request.intersection_id} received successfully."
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                insert_query = """
+                    INSERT INTO traffic_data (intersection_id, date, time, signal_status_1, vehicle_count, incident)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                cursor.execute(insert_query, (
+                    request.intersection_id,
+                    request.date,
+                    request.time,
+                    request.signal_status_1,
+                    request.vehicle_count,
+                    request.incident,
+                ))
+                conn.commit()
+            response = traffic_pb2.TrafficDataReceiveResponse()
+            response.message = f"Traffic data for intersection nr.{request.intersection_id} received and saved successfully."
+            db_pool.putconn(conn)
+        except Exception as e:
+            response = traffic_pb2.TrafficDataReceiveResponse()
+            response.message = f"Error saving traffic data: {str(e)}"
         return response
 
     def GetTodayStatistics(self, request, context):
-        response = traffic_pb2.TrafficAnalytics(
-            intersection_id=request.intersection_id,
-            timestamp=datetime.now().isoformat(),
-            average_vehicle_count=45.0,
-            traffic_density="Moderate",
-            peak_hours=["07:00 AM - 09:00 AM"],
-            incidents=1
-        )
-        return response
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                query = """
+                SELECT vehicle_count, time, incident from traffic_data
+                WHERE intersection_id = %s
+                AND date = %s
+                """
+                cursor.execute(query, (request.intersection_id, datetime.now().strftime('%Y-%m-%d')))
+                results = cursor.fetchall()
+                print("Retrieved data:", results)
+                total_vehicle_count = 0
+                total_incidents = 0
+                times = [result[1] for result in results]
+                for result in results:
+                    total_vehicle_count += result[0]
+                    if result[2]:
+                        total_incidents += 1
+                    sorted_times = sorted(times)
+                peak_start = sorted_times[0].strftime("%I:%M %p")
+                peak_end = sorted_times[-1].strftime("%I:%M %p")
+                peak_hours = f"{peak_start} - {peak_end}"
+                average_vehicle_count = round(total_vehicle_count / len(results), 3) if len(results) > 0 else 0.0
+                average_incidents = round(total_incidents / len(results), 3) if len(results) > 0 else 0.0
+            with conn.cursor() as cursor:
+                query = """
+                    INSERT INTO traffic_analytics (
+                    intersection_id, 
+                    date, 
+                    average_vehicle_count, 
+                    average_incidents, 
+                    analytics_type
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (intersection_id, date, analytics_type)
+                    DO UPDATE SET
+                      average_vehicle_count = EXCLUDED.average_vehicle_count,
+                      average_incidents = EXCLUDED.average_incidents;
+                """
+                try:
+                    cursor.execute(query, (
+                        request.intersection_id,
+                        datetime.now().strftime("%Y-%m-%d"),
+                        average_vehicle_count,
+                        average_incidents,
+                        'Daily'
+                    ))
+                    conn.commit()
+                except Exception as e:
+                    print("Error inserting data into traffic_analytics:", e)
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = request.intersection_id
+            response.timestamp = datetime.now().isoformat()
+            response.average_vehicle_count = average_vehicle_count
+            response.peak_hours = peak_hours
+            response.average_incidents = average_incidents
+            db_pool.putconn(conn)
+            return response
+        except Exception as e:
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = 0
+            response.timestamp = '0'
+            response.average_vehicle_count = 0
+            response.peak_hours = '0'
+            response.average_incidents = 0
+            return response
 
     def GetLastWeekStatistics(self, request, context):
-        response = traffic_pb2.TrafficAnalytics(
-            intersection_id=request.intersection_id,
-            timestamp=datetime.now().isoformat(),
-            average_vehicle_count=40.0,
-            traffic_density="Low",
-            peak_hours=["08:00 AM - 10:00 AM"],
-            incidents=0
-        )
-        return response
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                end_date = datetime.now().date()
+                start_date = end_date - relativedelta(weeks=1)
+                insert_date = end_date
+                query = """
+                SELECT vehicle_count, time, incident from traffic_data
+                WHERE intersection_id = %s
+                AND date >= %s 
+                AND date <= %s
+                """
+                cursor.execute(query, (
+                    request.intersection_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+                ))
+                results = cursor.fetchall()
+                print("Retrieved data for the last week:", results)
+                total_vehicle_count = 0
+                total_incidents = 0
+                times = [result[1] for result in results]
+                for result in results:
+                    total_vehicle_count += result[0]
+                    if result[2]:
+                        total_incidents += 1
+                    sorted_times = sorted(times)
+                peak_start = sorted_times[0].strftime("%I:%M %p")
+                peak_end = sorted_times[-1].strftime("%I:%M %p")
+                peak_hours = f"{peak_start} - {peak_end}"
+                average_vehicle_count = round(total_vehicle_count / len(results), 3) if len(results) > 0 else 0.0
+                average_incidents = round(total_incidents / len(results), 3) if len(results) > 0 else 0.0
+            with conn.cursor() as cursor:
+                query = """
+                    INSERT INTO traffic_analytics (
+                        intersection_id, 
+                        date, 
+                        average_vehicle_count, 
+                        average_incidents, 
+                        analytics_type
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (intersection_id, date, analytics_type)
+                    DO UPDATE SET
+                        average_vehicle_count = EXCLUDED.average_vehicle_count,
+                        average_incidents = EXCLUDED.average_incidents;
+                """
+                try:
+                    cursor.execute(query, (
+                        request.intersection_id,
+                        insert_date.strftime("%Y-%m-%d"),
+                        average_vehicle_count,
+                        average_incidents,
+                        'Weekly'
+                    ))
+                    conn.commit()
+                except Exception as e:
+                    print("Error inserting data into traffic_analytics:", e)
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = request.intersection_id
+            response.timestamp = datetime.now().isoformat()
+            response.average_vehicle_count = average_vehicle_count
+            response.peak_hours = peak_hours
+            response.average_incidents = average_incidents
+            db_pool.putconn(conn)
+            return response
+        except Exception as e:
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = 0
+            response.timestamp = '0'
+            response.average_vehicle_count = 0
+            response.peak_hours = '0'
+            response.average_incidents = 0
+            return response
 
     def GetNextWeekPredictions(self, request, context):
-        response = traffic_pb2.TrafficAnalytics(
-            intersection_id=request.intersection_id,
-            timestamp=datetime.now().isoformat(),
-            average_vehicle_count=50.0,
-            traffic_density="Moderate",
-            peak_hours=["07:30 AM - 09:30 AM"],
-            incidents=2
-        )
-        return response
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                end_date = datetime.now().date()
+                start_date = end_date - relativedelta(weeks=1)
+                insert_date = end_date
+                query = """
+                SELECT vehicle_count, time, incident from traffic_data
+                WHERE intersection_id = %s
+                AND date >= %s 
+                AND date <= %s
+                """
+                cursor.execute(query, (
+                    request.intersection_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
+                ))
+                results = cursor.fetchall()
+                print("Retrieved data for the last week for predictions:", results)
+                total_vehicle_count = 0
+                total_incidents = 0
+                times = [result[1] for result in results]
+                for result in results:
+                    total_vehicle_count += result[0]
+                    if result[2]:
+                        total_incidents += 1
+                    sorted_times = sorted(times)
+                peak_start = sorted_times[0].strftime("%I:%M %p")
+                peak_end = sorted_times[-1].strftime("%I:%M %p")
+                peak_hours = f"{peak_start} - {peak_end}"
+                average_vehicle_count = round(total_vehicle_count / len(results), 3) if len(results) > 0 else 0.0
+                average_incidents = round(total_incidents / len(results), 3) if len(results) > 0 else 0.0
+                predicted_average_vehicle_count = average_vehicle_count + 10
+                predicted_average_incidents = average_incidents + 10
+            with conn.cursor() as cursor:
+                query = """
+                    INSERT INTO traffic_analytics (
+                        intersection_id, 
+                        date, 
+                        average_vehicle_count, 
+                        average_incidents, 
+                        analytics_type
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (intersection_id, date, analytics_type)
+                    DO UPDATE SET
+                        average_vehicle_count = EXCLUDED.average_vehicle_count,
+                        average_incidents = EXCLUDED.average_incidents;
+                """
+                try:
+                    cursor.execute(query, (
+                        request.intersection_id,
+                        insert_date.strftime("%Y-%m-%d"),
+                        predicted_average_vehicle_count,
+                        predicted_average_incidents,
+                        'Prediction'
+                    ))
+                    conn.commit()
+                except Exception as e:
+                    print("Error inserting data into traffic_analytics:", e)
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = request.intersection_id
+            response.timestamp = datetime.now().isoformat()
+            response.average_vehicle_count = predicted_average_vehicle_count
+            response.peak_hours = peak_hours
+            response.average_incidents = predicted_average_incidents
+            db_pool.putconn(conn)
+            return response
+        except Exception as e:
+            response = traffic_pb2.TrafficAnalytics()
+            response.intersection_id = 0
+            response.timestamp = '0'
+            response.average_vehicle_count = 0
+            response.peak_hours = '0'
+            response.average_incidents = 0
+            return response
 
 
 def start():

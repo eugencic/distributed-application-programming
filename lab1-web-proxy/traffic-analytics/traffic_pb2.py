@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rtraffic.proto\x12\x04main\"\x84\x01\n\x0bTrafficData\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\x12\x17\n\x0fsignal_status_1\x18\x02 \x01(\x05\x12\x15\n\rvehicle_count\x18\x03 \x01(\x05\x12\x10\n\x08incident\x18\x04 \x01(\x08\x12\x0c\n\x04\x64\x61te\x18\x05 \x01(\t\x12\x0c\n\x04time\x18\x06 \x01(\t\"-\n\x1aTrafficDataReceiveResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\".\n\x13IntersectionRequest\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\"\x9d\x01\n\x10TrafficAnalytics\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x1d\n\x15\x61verage_vehicle_count\x18\x03 \x01(\x01\x12\x17\n\x0ftraffic_density\x18\x04 \x01(\t\x12\x12\n\npeak_hours\x18\x05 \x03(\t\x12\x11\n\tincidents\x18\x06 \x01(\x05\x32\xb7\x02\n\x0fTrafficAnalyzer\x12\x42\n\x0bReceiveData\x12\x11.main.TrafficData\x1a .main.TrafficDataReceiveResponse\x12G\n\x12GetTodayStatistics\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalytics\x12J\n\x15GetLastWeekStatistics\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalytics\x12K\n\x16GetNextWeekPredictions\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalyticsb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rtraffic.proto\x12\x04main\"\x84\x01\n\x0bTrafficData\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\x12\x17\n\x0fsignal_status_1\x18\x02 \x01(\x05\x12\x15\n\rvehicle_count\x18\x03 \x01(\x05\x12\x10\n\x08incident\x18\x04 \x01(\x08\x12\x0c\n\x04\x64\x61te\x18\x05 \x01(\t\x12\x0c\n\x04time\x18\x06 \x01(\t\"-\n\x1aTrafficDataReceiveResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\".\n\x13IntersectionRequest\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\"\x8c\x01\n\x10TrafficAnalytics\x12\x17\n\x0fintersection_id\x18\x01 \x01(\x05\x12\x11\n\ttimestamp\x18\x02 \x01(\t\x12\x1d\n\x15\x61verage_vehicle_count\x18\x03 \x01(\x01\x12\x12\n\npeak_hours\x18\x04 \x01(\t\x12\x19\n\x11\x61verage_incidents\x18\x05 \x01(\x02\x32\xb7\x02\n\x0fTrafficAnalyzer\x12\x42\n\x0bReceiveData\x12\x11.main.TrafficData\x1a .main.TrafficDataReceiveResponse\x12G\n\x12GetTodayStatistics\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalytics\x12J\n\x15GetLastWeekStatistics\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalytics\x12K\n\x16GetNextWeekPredictions\x12\x19.main.IntersectionRequest\x1a\x16.main.TrafficAnalyticsb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -27,7 +27,7 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_INTERSECTIONREQUEST']._serialized_start=205
   _globals['_INTERSECTIONREQUEST']._serialized_end=251
   _globals['_TRAFFICANALYTICS']._serialized_start=254
-  _globals['_TRAFFICANALYTICS']._serialized_end=411
-  _globals['_TRAFFICANALYZER']._serialized_start=414
-  _globals['_TRAFFICANALYZER']._serialized_end=725
+  _globals['_TRAFFICANALYTICS']._serialized_end=394
+  _globals['_TRAFFICANALYZER']._serialized_start=397
+  _globals['_TRAFFICANALYZER']._serialized_end=708
 # @@protoc_insertion_point(module_scope)

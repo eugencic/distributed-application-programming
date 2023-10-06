@@ -30,7 +30,6 @@ message TrafficAnalytics {
   int32 intersection_id = 1;
   string timestamp = 2;
   double average_vehicle_count = 3;
-  string traffic_density = 4;
-  repeated string peak_hours = 5;
-  int32 incidents = 6;
+  string peak_hours = 4;
+  float average_incidents = 5;
 }
