@@ -5,6 +5,8 @@ import traffic_pb2_grpc
 import psycopg2.pool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
+import threading
 
 try:
     conn = psycopg2.connect(
@@ -32,9 +34,36 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
 
 class TrafficAnalyzerServicer(traffic_pb2_grpc.TrafficAnalyzerServicer):
     def ReceiveData(self, request, context):
+        timeout_seconds = 2
+
+        timeout_event = threading.Event()
+
+        def timeout_handler():
+            timeout_event.set()
+            print("Request timed out.")
+
+        timer_thread = threading.Timer(timeout_seconds, timeout_handler)
+        timer_thread.start()
+
+        # time.sleep(3)
+
+        if timeout_event.is_set():
+            print("Request timed out before database operation.")
+            context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
+            context.set_details("Request timed out before database operation.")
+            return traffic_pb2.TrafficDataReceiveResponse(message="Request timed out before database operation.")
+
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
+                # time.sleep(3)
+
+                if timeout_event.is_set():
+                    print("Request timed out before inserting data.")
+                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
+                    context.set_details("Request timed out before inserting data.")
+                    return traffic_pb2.TrafficDataReceiveResponse(message="Request timed out before inserting data.")
+
                 insert_query = """
                     INSERT INTO traffic_data (intersection_id, date, time, signal_status_1, vehicle_count, incident)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -48,12 +77,19 @@ class TrafficAnalyzerServicer(traffic_pb2_grpc.TrafficAnalyzerServicer):
                     request.incident,
                 ))
                 conn.commit()
+                timer_thread.cancel()
             response = traffic_pb2.TrafficDataReceiveResponse()
-            response.message = f"Traffic data for intersection nr.{request.intersection_id} received and saved successfully."
+            response.message = f"Traffic data for intersection nr.{request.intersection_id} received successfully."
             db_pool.putconn(conn)
         except Exception as e:
             response = traffic_pb2.TrafficDataReceiveResponse()
             response.message = f"Error saving traffic data: {str(e)}"
+        except grpc.RpcError as e:
+            print(f"RPC error: {str(e)}")
+            context.set_code(e.code())
+            context.set_details(str(e))
+            response = traffic_pb2.TrafficDataReceiveResponse(message=str(e))
+
         return response
 
     def GetTodayStatistics(self, request, context):
