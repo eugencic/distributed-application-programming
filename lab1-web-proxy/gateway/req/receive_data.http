@@ -1,0 +1,13 @@
+POST http://localhost:4040/v1/receive_data
+Content-Type: application/json
+
+{
+  "intersection_id": 5,
+  "signal_status_1": 9,
+  "vehicle_count": 50,
+  "incident": false,
+  "date": "09.10.2023",
+  "time": "19:11"
+}
+
+###
