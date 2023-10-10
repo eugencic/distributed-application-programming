@@ -5,8 +5,33 @@ import traffic_pb2_grpc
 import psycopg2.pool
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import time
 import threading
+import requests
+
+
+def register_service(service_name, service_host, service_port, service_discovery_endpoint):
+    service_data = {
+        "name": service_name,
+        "host": service_host,
+        "port": service_port,
+    }
+
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(
+            f"{service_discovery_endpoint}/register_service",
+            json=service_data,
+            headers=headers,
+        )
+
+        if response.status_code == 201:
+            print(f"Registered {service_name} with service discovery")
+        else:
+            print(f"Failed to register {service_name} with service discovery: {response.status_code}")
+    except Exception as e:
+        print(f"Error while registering {service_name}: {str(e)}")
+
 
 try:
     conn = psycopg2.connect(
@@ -414,6 +439,13 @@ class TrafficAnalyzerServicer(traffic_pb2_grpc.TrafficAnalyzerServicer):
 
 
 def start():
+    service_name = "traffic-analyzer"
+    service_host = "localhost"  # Change to the actual host
+    service_port = 8080  # Change to the actual port
+    service_discovery_endpoint = "http://localhost:9000"  # Service discovery endpoint
+
+    register_service(service_name, service_host, service_port, service_discovery_endpoint)
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_pb2_grpc.add_TrafficAnalyzerServicer_to_server(TrafficAnalyzerServicer(), server)
     server.add_insecure_port("localhost:8080")
