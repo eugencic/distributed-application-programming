@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package regulation;
+package main;
 
 option go_package = ".";
 
@@ -9,19 +9,19 @@ import "google/api/annotations.proto";
 service TrafficRegulation {
   rpc ReceiveDataForLogs (TrafficDataForLogs) returns (TrafficDataForLogsReceiveResponse) {
     option (google.api.http) = {
-      post: "/receive_data_for_analytics_logs"
+      post: "/receive_data_for_logs"
       body: "*"
     };
   };
   rpc GetTodayControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse) {
     option (google.api.http) = {
-      post: "/get_today_statistics_logs"
+      post: "/get_today_control_logs"
       body: "*"
     };
   };
   rpc GetLastWeekControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse) {
     option (google.api.http) = {
-      post: "/get_last_week_statistics_logs"
+      post: "/get_last_week_control_logs"
       body: "*"
     };
   };

@@ -147,7 +147,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/regulation.TrafficRegulation/ReceiveDataForLogs", runtime.WithHTTPPathPattern("/receive_data_for_analytics_logs"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/ReceiveDataForLogs", runtime.WithHTTPPathPattern("/receive_data_for_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -172,7 +172,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/regulation.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_statistics_logs"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -197,7 +197,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/regulation.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_statistics_logs"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -261,7 +261,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/regulation.TrafficRegulation/ReceiveDataForLogs", runtime.WithHTTPPathPattern("/receive_data_for_analytics_logs"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/ReceiveDataForLogs", runtime.WithHTTPPathPattern("/receive_data_for_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -283,7 +283,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/regulation.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_statistics_logs"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -305,7 +305,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/regulation.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_statistics_logs"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -325,11 +325,11 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 }
 
 var (
-	pattern_TrafficRegulation_ReceiveDataForLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"receive_data_for_analytics_logs"}, ""))
+	pattern_TrafficRegulation_ReceiveDataForLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"receive_data_for_logs"}, ""))
 
-	pattern_TrafficRegulation_GetTodayControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_today_statistics_logs"}, ""))
+	pattern_TrafficRegulation_GetTodayControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_today_control_logs"}, ""))
 
-	pattern_TrafficRegulation_GetLastWeekControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_last_week_statistics_logs"}, ""))
+	pattern_TrafficRegulation_GetLastWeekControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_last_week_control_logs"}, ""))
 )
 
 var (

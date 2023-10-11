@@ -14,6 +14,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 type Service struct {
@@ -30,6 +31,8 @@ var (
 	trafficAnalyticsServiceName  = "traffic-analytics-service"
 	trafficRegulationServiceName = "traffic-regulation-service"
 )
+
+var logger = log.New(os.Stdout, "", log.LstdFlags)
 
 func registerWithServiceDiscovery() {
 	serviceInfo := Service{
@@ -85,6 +88,22 @@ func getServiceInfo(serviceName string) (string, int, error) {
 	return service.Host, service.Port, nil
 }
 
+func logRequestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Printf("Request: %s %s", r.Method, r.URL.Path)
+
+		next.ServeHTTP(w, r)
+
+		if status, ok := w.(interface {
+			Status() int
+		}); ok {
+			if status.Status() < 200 || status.Status() >= 300 {
+				logger.Printf("Response Error: %d", status.Status())
+			}
+		}
+	})
+}
+
 func run() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -125,15 +144,13 @@ func run() error {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", grpcMux)
+	mux.Handle("/", logRequestMiddleware(grpcMux))
 
 	fmt.Println("Gateway listening on port 4040...")
-
-	return http.ListenAndServe(":4040", grpcMux)
+	return http.ListenAndServe(":4040", mux)
 }
 
 func main() {
-
 	flag.Parse()
 	defer glog.Flush()
 

@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TrafficRegulation_ReceiveDataForLogs_FullMethodName     = "/regulation.TrafficRegulation/ReceiveDataForLogs"
-	TrafficRegulation_GetTodayControlLogs_FullMethodName    = "/regulation.TrafficRegulation/GetTodayControlLogs"
-	TrafficRegulation_GetLastWeekControlLogs_FullMethodName = "/regulation.TrafficRegulation/GetLastWeekControlLogs"
+	TrafficRegulation_ReceiveDataForLogs_FullMethodName     = "/main.TrafficRegulation/ReceiveDataForLogs"
+	TrafficRegulation_GetTodayControlLogs_FullMethodName    = "/main.TrafficRegulation/GetTodayControlLogs"
+	TrafficRegulation_GetLastWeekControlLogs_FullMethodName = "/main.TrafficRegulation/GetLastWeekControlLogs"
 )
 
 // TrafficRegulationClient is the client API for TrafficRegulation service.
@@ -162,7 +162,7 @@ func _TrafficRegulation_GetLastWeekControlLogs_Handler(srv interface{}, ctx cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TrafficRegulation_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "regulation.TrafficRegulation",
+	ServiceName: "main.TrafficRegulation",
 	HandlerType: (*TrafficRegulationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
