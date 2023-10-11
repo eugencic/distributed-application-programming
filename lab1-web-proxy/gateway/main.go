@@ -6,14 +6,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-
-	pb "gateway/gen"
+	ta "gateway/gen/traffic_analytics"
+	tr "gateway/gen/traffic_regulation"
 	"github.com/golang/glog"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"io"
+	"log"
+	"net/http"
 )
 
 type Service struct {
@@ -23,11 +23,12 @@ type Service struct {
 }
 
 var (
-	gatewayName                = "gateway"
-	gatewayHost                = "localhost"
-	gatewayPort                = 4000
-	serviceDiscoveryEndpoint   = "http://localhost:9000"
-	trafficAnalyzerServiceName = "traffic-analyzer"
+	gatewayName                  = "Gateway"
+	gatewayHost                  = "localhost"
+	gatewayPort                  = 4040
+	serviceDiscoveryEndpoint     = "http://localhost:9090"
+	trafficAnalyticsServiceName  = "traffic-analytics-service"
+	trafficRegulationServiceName = "traffic-regulation-service"
 )
 
 func registerWithServiceDiscovery() {
@@ -89,12 +90,18 @@ func run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	trafficAnalyzerHost, trafficAnalyzerPort, err := getServiceInfo(trafficAnalyzerServiceName)
+	trafficAnalyticsHost, trafficAnalyticsPort, err := getServiceInfo(trafficAnalyticsServiceName)
 	if err != nil {
-		log.Fatalf("Failed to retrieve information about the traffic analyzer service: %v", err)
+		log.Fatalf("Failed to retrieve information about the traffic analytics service: %v", err)
 	}
 
-	trafficAnalyzerServerEndpoint := flag.String("traffic-analyzer-server-endpoint", fmt.Sprintf("%s:%d", trafficAnalyzerHost, trafficAnalyzerPort), "traffic analyzer server endpoint")
+	trafficRegulationHost, trafficRegulationPort, err := getServiceInfo(trafficRegulationServiceName)
+	if err != nil {
+		log.Fatalf("Failed to retrieve information about the traffic regulation service: %v", err)
+	}
+
+	trafficAnalyticsServiceEndpoint := flag.String("traffic-analytics-service-endpoint", fmt.Sprintf("%s:%d", trafficAnalyticsHost, trafficAnalyticsPort), "traffic analytics service endpoint")
+	trafficRegulationServiceEndpoint := flag.String("traffic-regulation-service-endpoint", fmt.Sprintf("%s:%d", trafficRegulationHost, trafficRegulationPort), "traffic regulation service endpoint")
 
 	flag.Parse()
 
@@ -102,18 +109,27 @@ func run() error {
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err = pb.RegisterTrafficAnalyzerHandlerFromEndpoint(ctx, grpcMux, *trafficAnalyzerServerEndpoint, opts)
+	err = ta.RegisterTrafficAnalyticsHandlerFromEndpoint(ctx, grpcMux, *trafficAnalyticsServiceEndpoint, opts)
 	if err != nil {
-		log.Fatalln("Cannot register handler server.")
+		log.Fatalln("Cannot register traffic analytics handler server.")
+	} else {
+		fmt.Println("Traffic analytics service registered.")
+	}
+
+	err = tr.RegisterTrafficRegulationHandlerFromEndpoint(ctx, grpcMux, *trafficRegulationServiceEndpoint, opts)
+	if err != nil {
+		log.Fatalln("Cannot register traffic regulation handler server.")
+	} else {
+		fmt.Println("Traffic regulation service registered.")
 	}
 
 	mux := http.NewServeMux()
 
 	mux.Handle("/", grpcMux)
 
-	fmt.Println("Gateway listening on port 4000...")
+	fmt.Println("Gateway listening on port 4040...")
 
-	return http.ListenAndServe(":4000", grpcMux)
+	return http.ListenAndServe(":4040", grpcMux)
 }
 
 func main() {

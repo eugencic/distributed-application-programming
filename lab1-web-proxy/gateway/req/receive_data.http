@@ -1,4 +1,4 @@
-POST http://localhost:4040/v1/receive_data
+POST http://localhost:4040/receive_data_for_logs
 Content-Type: application/json
 
 {

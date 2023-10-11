@@ -61,6 +61,6 @@ func main() {
 	http.HandleFunc("/register_service", registerService)
 	http.HandleFunc("/get_service_data", getService)
 
-	fmt.Println("Service discovery listening on port 9000...")
-	log.Fatal(http.ListenAndServe(":9000", nil))
+	fmt.Println("Service discovery listening on port 9090...")
+	log.Fatal(http.ListenAndServe(":9090", nil))
 }

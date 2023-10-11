@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import traffic_pb2 as traffic__pb2
+import traffic_analytics_pb2 as traffic__analytics__pb2
 
 
-class TrafficAnalyzerStub(object):
+class TrafficAnalyticsStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -14,32 +14,32 @@ class TrafficAnalyzerStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.ReceiveData = channel.unary_unary(
-                '/main.TrafficAnalyzer/ReceiveData',
-                request_serializer=traffic__pb2.TrafficData.SerializeToString,
-                response_deserializer=traffic__pb2.TrafficDataReceiveResponse.FromString,
+        self.ReceiveDataForAnalytics = channel.unary_unary(
+                '/analytics.TrafficAnalytics/ReceiveDataForAnalytics',
+                request_serializer=traffic__analytics__pb2.TrafficDataForAnalytics.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.FromString,
                 )
         self.GetTodayStatistics = channel.unary_unary(
-                '/main.TrafficAnalyzer/GetTodayStatistics',
-                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
-                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                '/analytics.TrafficAnalytics/GetTodayStatistics',
+                request_serializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
                 )
         self.GetLastWeekStatistics = channel.unary_unary(
-                '/main.TrafficAnalyzer/GetLastWeekStatistics',
-                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
-                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                '/analytics.TrafficAnalytics/GetLastWeekStatistics',
+                request_serializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
                 )
         self.GetNextWeekPredictions = channel.unary_unary(
-                '/main.TrafficAnalyzer/GetNextWeekPredictions',
-                request_serializer=traffic__pb2.IntersectionRequest.SerializeToString,
-                response_deserializer=traffic__pb2.TrafficAnalytics.FromString,
+                '/analytics.TrafficAnalytics/GetNextWeekPredictions',
+                request_serializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
                 )
 
 
-class TrafficAnalyzerServicer(object):
+class TrafficAnalyticsServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def ReceiveData(self, request, context):
+    def ReceiveDataForAnalytics(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -64,40 +64,40 @@ class TrafficAnalyzerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_TrafficAnalyzerServicer_to_server(servicer, server):
+def add_TrafficAnalyticsServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'ReceiveData': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReceiveData,
-                    request_deserializer=traffic__pb2.TrafficData.FromString,
-                    response_serializer=traffic__pb2.TrafficDataReceiveResponse.SerializeToString,
+            'ReceiveDataForAnalytics': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReceiveDataForAnalytics,
+                    request_deserializer=traffic__analytics__pb2.TrafficDataForAnalytics.FromString,
+                    response_serializer=traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.SerializeToString,
             ),
             'GetTodayStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTodayStatistics,
-                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
-                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
+                    request_deserializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.FromString,
+                    response_serializer=traffic__analytics__pb2.TrafficAnalyticsResponse.SerializeToString,
             ),
             'GetLastWeekStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetLastWeekStatistics,
-                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
-                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
+                    request_deserializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.FromString,
+                    response_serializer=traffic__analytics__pb2.TrafficAnalyticsResponse.SerializeToString,
             ),
             'GetNextWeekPredictions': grpc.unary_unary_rpc_method_handler(
                     servicer.GetNextWeekPredictions,
-                    request_deserializer=traffic__pb2.IntersectionRequest.FromString,
-                    response_serializer=traffic__pb2.TrafficAnalytics.SerializeToString,
+                    request_deserializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.FromString,
+                    response_serializer=traffic__analytics__pb2.TrafficAnalyticsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'main.TrafficAnalyzer', rpc_method_handlers)
+            'analytics.TrafficAnalytics', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class TrafficAnalyzer(object):
+class TrafficAnalytics(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def ReceiveData(request,
+    def ReceiveDataForAnalytics(request,
             target,
             options=(),
             channel_credentials=None,
@@ -107,9 +107,9 @@ class TrafficAnalyzer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/ReceiveData',
-            traffic__pb2.TrafficData.SerializeToString,
-            traffic__pb2.TrafficDataReceiveResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/ReceiveDataForAnalytics',
+            traffic__analytics__pb2.TrafficDataForAnalytics.SerializeToString,
+            traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -124,9 +124,9 @@ class TrafficAnalyzer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetTodayStatistics',
-            traffic__pb2.IntersectionRequest.SerializeToString,
-            traffic__pb2.TrafficAnalytics.FromString,
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/GetTodayStatistics',
+            traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+            traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -141,9 +141,9 @@ class TrafficAnalyzer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetLastWeekStatistics',
-            traffic__pb2.IntersectionRequest.SerializeToString,
-            traffic__pb2.TrafficAnalytics.FromString,
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/GetLastWeekStatistics',
+            traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+            traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -158,8 +158,8 @@ class TrafficAnalyzer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/main.TrafficAnalyzer/GetNextWeekPredictions',
-            traffic__pb2.IntersectionRequest.SerializeToString,
-            traffic__pb2.TrafficAnalytics.FromString,
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/GetNextWeekPredictions',
+            traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
+            traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

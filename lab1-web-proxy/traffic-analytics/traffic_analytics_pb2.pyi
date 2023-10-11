@@ -4,7 +4,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class TrafficData(_message.Message):
+class TrafficDataForAnalytics(_message.Message):
     __slots__ = ["intersection_id", "signal_status_1", "vehicle_count", "incident", "date", "time"]
     INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
     SIGNAL_STATUS_1_FIELD_NUMBER: _ClassVar[int]
@@ -20,19 +20,19 @@ class TrafficData(_message.Message):
     time: str
     def __init__(self, intersection_id: _Optional[int] = ..., signal_status_1: _Optional[int] = ..., vehicle_count: _Optional[int] = ..., incident: bool = ..., date: _Optional[str] = ..., time: _Optional[str] = ...) -> None: ...
 
-class TrafficDataReceiveResponse(_message.Message):
+class TrafficDataForAnalyticsReceiveResponse(_message.Message):
     __slots__ = ["message"]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     message: str
     def __init__(self, message: _Optional[str] = ...) -> None: ...
 
-class IntersectionRequest(_message.Message):
+class IntersectionRequestForAnalytics(_message.Message):
     __slots__ = ["intersection_id"]
     INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
     intersection_id: int
     def __init__(self, intersection_id: _Optional[int] = ...) -> None: ...
 
-class TrafficAnalytics(_message.Message):
+class TrafficAnalyticsResponse(_message.Message):
     __slots__ = ["intersection_id", "timestamp", "average_vehicle_count", "peak_hours", "average_incidents"]
     INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
