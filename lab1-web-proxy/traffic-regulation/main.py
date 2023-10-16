@@ -3,8 +3,6 @@ from concurrent import futures
 import traffic_regulation_pb2
 import traffic_regulation_pb2_grpc
 import psycopg2.pool
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import threading
 import requests
 
@@ -105,33 +103,58 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                     request.vehicle_count,
                     request.incident,
                 ))
+                conn.commit()
 
-                # query = """
-                #     INSERT INTO traffic_analytics (
-                #     intersection_id,
-                #     date,
-                #     average_vehicle_count,
-                #     average_incidents,
-                #     analytics_type
-                #     )
-                #     VALUES (%s, %s, %s, %s, %s)
-                #     ON CONFLICT (intersection_id, date, analytics_type)
-                #     DO UPDATE SET
-                #       average_vehicle_count = EXCLUDED.average_vehicle_count,
-                #       average_incidents = EXCLUDED.average_incidents;
-                # """
-                # try:
-                #     cursor.execute(query, (
-                #         request.intersection_id,
-                #         datetime.now().strftime("%Y-%m-%d"),
-                #         average_vehicle_count,
-                #         average_incidents,
-                #         'Daily'
-                #     ))
-                #     conn.commit()
-                #     timer_thread.cancel()
-                # except Exception as e:
-                #     print("Error inserting data into traffic_analytics:", e)
+            with conn.cursor() as cursor:
+                # time.sleep(3)
+
+                if timeout_event.is_set():
+                    print("Request timed out before inserting data.")
+                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
+                    context.set_details("Request timed out before inserting data.")
+                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out before "
+                                                                                            "inserting data.")
+                cursor.execute(
+                    """
+                    SELECT log_messages FROM traffic_logs
+                    WHERE intersection_id = %s AND date = %s
+                    """,
+                    (request.intersection_id, request.date),
+                )
+                existing_logs = cursor.fetchone()
+
+                if existing_logs is not None:
+                    existing_log_messages = existing_logs[0]
+                else:
+                    existing_log_messages = []
+
+                if request.signal_status_1 == 1 and request.vehicle_count > 30:
+                    request.signal_status_1 = 2
+                    log_message = (f"Traffic light at intersection nr.{request.intersection_id} changed to 'green' due "
+                                   f"to high vehicle count.")
+
+                    existing_log_messages.append(log_message)
+
+                if request.signal_status_1 == 2 and request.vehicle_count < 5:
+                    request.signal_status_1 = 1
+
+                    log_message = (f"Traffic light at intersection nr.{request.intersection_id} changed to 'red' due "
+                                   f"to low vehicle count.")
+
+                    existing_log_messages.append(log_message)
+
+                cursor.execute(
+                    """
+                    INSERT INTO traffic_logs (intersection_id, date, log_messages)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (intersection_id, date)
+                    DO UPDATE
+                    SET log_messages = %s
+                    """,
+                    (request.intersection_id, request.date, existing_log_messages,
+                     existing_log_messages),
+                )
+
                 conn.commit()
                 timer_thread.cancel()
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()

@@ -8,8 +8,8 @@ def receive_data_for_logs():
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         request = traffic_regulation_pb2.TrafficDataForLogs(
             intersection_id=5,
-            signal_status_1=9,
-            vehicle_count=50,
+            signal_status_1=2,
+            vehicle_count=4,
             incident=False,
             date="10.10.2023",
             time="19:11"
