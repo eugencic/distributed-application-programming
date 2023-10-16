@@ -34,9 +34,9 @@ class IntersectionRequestForLogs(_message.Message):
     def __init__(self, intersection_id: _Optional[int] = ...) -> None: ...
 
 class TrafficRegulationResponse(_message.Message):
-    __slots__ = ["intersection_id", "timestamp"]
+    __slots__ = ["intersection_id", "logs"]
     INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
-    TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
+    LOGS_FIELD_NUMBER: _ClassVar[int]
     intersection_id: int
-    timestamp: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, intersection_id: _Optional[int] = ..., timestamp: _Optional[_Iterable[str]] = ...) -> None: ...
+    logs: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, intersection_id: _Optional[int] = ..., logs: _Optional[_Iterable[str]] = ...) -> None: ...

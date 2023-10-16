@@ -46,5 +46,5 @@ message IntersectionRequestForLogs {
 
 message TrafficRegulationResponse {
   int32 intersection_id = 1;
-  repeated string timestamp = 2;
+  repeated string logs = 2;
 }
