@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	ta "gateway/gen/traffic_analytics"
 	tr "gateway/gen/traffic_regulation"
 	"github.com/golang/glog"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -23,11 +24,11 @@ type Service struct {
 }
 
 var (
-	gatewayName              = "Gateway"
-	gatewayHost              = "localhost"
-	gatewayPort              = 6060
-	serviceDiscoveryEndpoint = "http://localhost:9090"
-	// trafficAnalyticsServiceName  = "traffic-analytics-service"
+	gatewayName                  = "Gateway"
+	gatewayHost                  = "localhost"
+	gatewayPort                  = 6060
+	serviceDiscoveryEndpoint     = "http://localhost:9090"
+	trafficAnalyticsServiceName  = "traffic-analytics-load-balancer"
 	trafficRegulationServiceName = "traffic-regulation-load-balancer"
 )
 
@@ -108,17 +109,17 @@ func run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	//trafficAnalyticsHost, trafficAnalyticsPort, err := getServiceInfo(trafficAnalyticsServiceName)
-	//if err != nil {
-	//	log.Fatalf("Failed to retrieve information about the traffic analytics service: %v", err)
-	//}
+	trafficAnalyticsHost, trafficAnalyticsPort, err := getServiceInfo(trafficAnalyticsServiceName)
+	if err != nil {
+		log.Fatalf("Failed to retrieve information about the traffic analytics service: %v", err)
+	}
 
 	trafficRegulationHost, trafficRegulationPort, err := getServiceInfo(trafficRegulationServiceName)
 	if err != nil {
 		log.Fatalf("Failed to retrieve information about the traffic regulation service: %v", err)
 	}
 
-	// trafficAnalyticsServiceEndpoint := flag.String("traffic-analytics-service-endpoint", fmt.Sprintf("%s:%d", trafficAnalyticsHost, trafficAnalyticsPort), "traffic analytics service endpoint")
+	trafficAnalyticsServiceEndpoint := flag.String("traffic-analytics-service-endpoint", fmt.Sprintf("%s:%d", trafficAnalyticsHost, trafficAnalyticsPort), "traffic analytics service endpoint")
 	trafficRegulationServiceEndpoint := flag.String("traffic-regulation-service-endpoint", fmt.Sprintf("%s:%d", trafficRegulationHost, trafficRegulationPort), "traffic regulation service endpoint")
 
 	flag.Parse()
@@ -127,12 +128,12 @@ func run() error {
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	//err = ta.RegisterTrafficAnalyticsHandlerFromEndpoint(ctx, grpcMux, *trafficAnalyticsServiceEndpoint, opts)
-	//if err != nil {
-	//	log.Fatalln("Cannot register traffic analytics handler server.")
-	//} else {
-	//	fmt.Println("Traffic analytics service registered.")
-	//}
+	err = ta.RegisterTrafficAnalyticsHandlerFromEndpoint(ctx, grpcMux, *trafficAnalyticsServiceEndpoint, opts)
+	if err != nil {
+		log.Fatalln("Cannot register traffic analytics handler server.")
+	} else {
+		fmt.Println("Traffic analytics service registered.")
+	}
 
 	err = tr.RegisterTrafficRegulationHandlerFromEndpoint(ctx, grpcMux, *trafficRegulationServiceEndpoint, opts)
 	if err != nil {
