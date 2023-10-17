@@ -7,7 +7,6 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import threading
 import requests
-import sys
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -427,45 +426,18 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             return response
 
 
-output_lock = threading.Lock()
-registration_lock = threading.Lock()
-
-
-def safe_print(message):
-    with output_lock:
-        print(message)
-
-
-def start_server(name, host, port, service_discovery):
-    try:
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
-        server.add_insecure_port(f"{host}:{port}")
-        with registration_lock:
-            register_service(name, host, port, service_discovery)
-            safe_print(f"{name} listening on port {port}...")
-        server.start()
-        server.wait_for_termination()
-    except Exception as e:
-        print(f"Error starting server {name} on port {port}: {str(e)}")
-        sys.exit(1)
+def start():
+    service_name = "traffic-analytics-service-1"
+    service_host = "localhost"
+    service_port = 7071
+    service_discovery_endpoint = "http://localhost:9090"
+    register_service(service_name, service_host, service_port, service_discovery_endpoint)
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
+    server.add_insecure_port("localhost:7071")
+    server.start()
+    server.wait_for_termination()
 
 
 if __name__ == '__main__':
-    service_discovery_endpoint = "http://localhost:9090"
-    num_replicas = 3
-    service_host = "localhost"
-    service_base_port = 8000
-    replica_ports = [service_base_port + i for i in range(num_replicas)]
-    replica_threads = []
-    for i, port in enumerate(replica_ports):
-        service_name = f"traffic-analytics-service-{i + 1}"
-        service_port = port
-        replica_thread = threading.Thread(target=start_server,
-                                          args=(service_name, service_host, service_port, service_discovery_endpoint))
-        replica_threads.append(replica_thread)
-    for thread in replica_threads:
-        thread.start()
-    for thread in replica_threads:
-        thread.join()
-
+    start()
