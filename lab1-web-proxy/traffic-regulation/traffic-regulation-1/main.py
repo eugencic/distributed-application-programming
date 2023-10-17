@@ -256,7 +256,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
 
 def start():
-    service_name = "traffic-regulation-service"
+    service_name = "traffic-regulation-service-1"
     service_host = "localhost"
     service_port = 8081
     service_discovery_endpoint = "http://localhost:9090"
