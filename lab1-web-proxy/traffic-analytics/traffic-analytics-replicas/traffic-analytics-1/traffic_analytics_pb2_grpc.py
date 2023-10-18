@@ -34,6 +34,11 @@ class TrafficAnalyticsStub(object):
                 request_serializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
                 response_deserializer=traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
                 )
+        self.TrafficAnalyticsServiceStatus = channel.unary_unary(
+                '/analytics.TrafficAnalytics/TrafficAnalyticsServiceStatus',
+                request_serializer=traffic__analytics__pb2.TrafficAnalyticsServiceStatusRequest.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.TrafficAnalyticsServiceStatusResponse.FromString,
+                )
 
 
 class TrafficAnalyticsServicer(object):
@@ -63,6 +68,12 @@ class TrafficAnalyticsServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def TrafficAnalyticsServiceStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TrafficAnalyticsServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -85,6 +96,11 @@ def add_TrafficAnalyticsServicer_to_server(servicer, server):
                     servicer.GetNextWeekPredictions,
                     request_deserializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.FromString,
                     response_serializer=traffic__analytics__pb2.TrafficAnalyticsResponse.SerializeToString,
+            ),
+            'TrafficAnalyticsServiceStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.TrafficAnalyticsServiceStatus,
+                    request_deserializer=traffic__analytics__pb2.TrafficAnalyticsServiceStatusRequest.FromString,
+                    response_serializer=traffic__analytics__pb2.TrafficAnalyticsServiceStatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -161,5 +177,22 @@ class TrafficAnalytics(object):
         return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/GetNextWeekPredictions',
             traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
             traffic__analytics__pb2.TrafficAnalyticsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def TrafficAnalyticsServiceStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/TrafficAnalyticsServiceStatus',
+            traffic__analytics__pb2.TrafficAnalyticsServiceStatusRequest.SerializeToString,
+            traffic__analytics__pb2.TrafficAnalyticsServiceStatusResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

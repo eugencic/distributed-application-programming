@@ -45,3 +45,13 @@ class TrafficAnalyticsResponse(_message.Message):
     peak_hours: str
     average_incidents: float
     def __init__(self, intersection_id: _Optional[int] = ..., timestamp: _Optional[str] = ..., average_vehicle_count: _Optional[float] = ..., peak_hours: _Optional[str] = ..., average_incidents: _Optional[float] = ...) -> None: ...
+
+class TrafficAnalyticsServiceStatusRequest(_message.Message):
+    __slots__ = []
+    def __init__(self) -> None: ...
+
+class TrafficAnalyticsServiceStatusResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...

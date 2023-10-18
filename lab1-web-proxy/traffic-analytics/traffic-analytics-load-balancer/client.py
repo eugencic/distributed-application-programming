@@ -4,7 +4,7 @@ import traffic_analytics_pb2_grpc
 
 
 def receive_data_for_analytics():
-    with grpc.insecure_channel('localhost:7072') as channel:
+    with grpc.insecure_channel('localhost:7000') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.TrafficDataForAnalytics(
             intersection_id=5,
@@ -19,7 +19,7 @@ def receive_data_for_analytics():
 
 
 def get_today_statistics(intersection_id):
-    with grpc.insecure_channel('localhost:7072') as channel:
+    with grpc.insecure_channel('localhost:7000') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.IntersectionRequestForAnalytics(intersection_id=intersection_id)
         response = stub.GetTodayStatistics(request)
@@ -32,7 +32,7 @@ def get_today_statistics(intersection_id):
 
 
 def get_last_week_statistics(intersection_id):
-    with grpc.insecure_channel('localhost:7072') as channel:
+    with grpc.insecure_channel('localhost:7000') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.IntersectionRequestForAnalytics(intersection_id=intersection_id)
         response = stub.GetLastWeekStatistics(request)
@@ -45,7 +45,7 @@ def get_last_week_statistics(intersection_id):
 
 
 def get_next_week_predictions(intersection_id):
-    with grpc.insecure_channel('localhost:7072') as channel:
+    with grpc.insecure_channel('localhost:7000') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.IntersectionRequestForAnalytics(intersection_id=intersection_id)
         response = stub.GetNextWeekPredictions(request)
@@ -58,7 +58,7 @@ def get_next_week_predictions(intersection_id):
 
 
 def get_service_status():
-    with grpc.insecure_channel('localhost:7072') as channel:
+    with grpc.insecure_channel('localhost:7000') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest()
         response = stub.TrafficAnalyticsServiceStatus(request)

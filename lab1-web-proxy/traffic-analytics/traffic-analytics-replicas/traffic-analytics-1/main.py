@@ -425,6 +425,28 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
             return response
 
+    def TrafficAnalyticsServiceStatus(self, request, context):
+        try:
+            conn = psycopg2.connect(
+                dbname='traffic-analytics-db',
+                user='postgres',
+                password='397777',
+                host='localhost',
+                port='5432'
+            )
+            context.set_code(grpc.StatusCode.OK)
+            context.set_details("traffic-analytics-service-1 is healthy")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message="traffic-analytics-service"
+                                                                                           "-1: healthy")
+            conn.close()
+            return response
+        except Exception as e:
+            context.set_code(grpc.StatusCode.OK)
+            context.set_details("traffic-analytics-service-1 is unhealthy")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message="traffic-analytics-service"
+                                                                                           "-1: unhealthy")
+            return response
+
 
 def start():
     service_name = "traffic-analytics-service-1"

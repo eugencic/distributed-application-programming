@@ -77,6 +77,24 @@ def forward_request(request, context, method):
     return response
 
 
+def collect_status_from_replicas():
+    responses = []
+    for replica_address in replica_addresses:
+        channel = grpc.insecure_channel(replica_address)
+        stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
+        try:
+            response = stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
+            responses.append(response)
+        except Exception as e:
+            print(f"Error getting status from replica {replica_address}: {str(e)}")
+    return responses
+
+
+def merge_status_responses(responses):
+    merged_status = ", ".join(response.message for response in responses)
+    return traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=merged_status)
+
+
 class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
     def __init__(self):
         pass
@@ -96,6 +114,20 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
     def GetNextWeekPredictions(self, request, context):
         response = forward_request(request, context, "GetNextWeekPredictions")
         return response
+
+    def TrafficAnalyticsServiceStatus(self, request, context):
+        responses = collect_status_from_replicas()
+        merged_response = merge_status_responses(responses)
+        unhealthy_service = "unhealthy"
+        if unhealthy_service in str(merged_response):
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"One or more services experience troubles. Statuses: {str(merged_response)}")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"Statuses: {str(merged_response)}")
+            return response
+        else:
+            context.set_code(grpc.StatusCode.OK)
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
+            return response
 
 
 def start_load_balancer(host, port):
