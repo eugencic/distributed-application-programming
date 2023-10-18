@@ -29,6 +29,11 @@ class TrafficRegulationStub(object):
                 request_serializer=traffic__regulation__pb2.IntersectionRequestForLogs.SerializeToString,
                 response_deserializer=traffic__regulation__pb2.TrafficRegulationResponse.FromString,
                 )
+        self.TrafficRegulationServiceStatus = channel.unary_unary(
+                '/main.TrafficRegulation/TrafficRegulationServiceStatus',
+                request_serializer=traffic__regulation__pb2.TrafficRegulationServiceStatusRequest.SerializeToString,
+                response_deserializer=traffic__regulation__pb2.TrafficRegulationServiceStatusResponse.FromString,
+                )
 
 
 class TrafficRegulationServicer(object):
@@ -52,6 +57,12 @@ class TrafficRegulationServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def TrafficRegulationServiceStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TrafficRegulationServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -69,6 +80,11 @@ def add_TrafficRegulationServicer_to_server(servicer, server):
                     servicer.GetLastWeekControlLogs,
                     request_deserializer=traffic__regulation__pb2.IntersectionRequestForLogs.FromString,
                     response_serializer=traffic__regulation__pb2.TrafficRegulationResponse.SerializeToString,
+            ),
+            'TrafficRegulationServiceStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.TrafficRegulationServiceStatus,
+                    request_deserializer=traffic__regulation__pb2.TrafficRegulationServiceStatusRequest.FromString,
+                    response_serializer=traffic__regulation__pb2.TrafficRegulationServiceStatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -128,5 +144,22 @@ class TrafficRegulation(object):
         return grpc.experimental.unary_unary(request, target, '/main.TrafficRegulation/GetLastWeekControlLogs',
             traffic__regulation__pb2.IntersectionRequestForLogs.SerializeToString,
             traffic__regulation__pb2.TrafficRegulationResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def TrafficRegulationServiceStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficRegulation/TrafficRegulationServiceStatus',
+            traffic__regulation__pb2.TrafficRegulationServiceStatusRequest.SerializeToString,
+            traffic__regulation__pb2.TrafficRegulationServiceStatusResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -4,7 +4,7 @@ import traffic_regulation_pb2_grpc
 
 
 def receive_data_for_logs():
-    with grpc.insecure_channel('localhost:8083') as channel:
+    with grpc.insecure_channel('localhost:8000') as channel:
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         request = traffic_regulation_pb2.TrafficDataForLogs(
             intersection_id=5,
@@ -19,7 +19,7 @@ def receive_data_for_logs():
 
 
 def get_today_control_logs(intersection_id):
-    with grpc.insecure_channel('localhost:8083') as channel:
+    with grpc.insecure_channel('localhost:8000') as channel:
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         request = traffic_regulation_pb2.IntersectionRequestForLogs(intersection_id=intersection_id)
         response = stub.GetTodayControlLogs(request)
@@ -29,7 +29,7 @@ def get_today_control_logs(intersection_id):
 
 
 def get_last_week_control_logs(intersection_id):
-    with grpc.insecure_channel('localhost:8083') as channel:
+    with grpc.insecure_channel('localhost:8000') as channel:
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         request = traffic_regulation_pb2.IntersectionRequestForLogs(intersection_id=intersection_id)
         response = stub.GetLastWeekControlLogs(request)
@@ -39,7 +39,7 @@ def get_last_week_control_logs(intersection_id):
 
 
 def get_service_status():
-    with grpc.insecure_channel('localhost:8083') as channel:
+    with grpc.insecure_channel('localhost:8000') as channel:
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         request = traffic_regulation_pb2.TrafficRegulationServiceStatusRequest()
         response = stub.TrafficRegulationServiceStatus(request)

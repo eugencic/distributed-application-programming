@@ -84,15 +84,15 @@ def collect_status_from_replicas():
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         try:
             response = stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
-            responses.append(response)
+            responses.append(response.message)
         except Exception as e:
             print(f"Error getting status from replica {replica_address}: {str(e)}")
     return responses
 
 
 def merge_status_responses(responses):
-    merged_status = ", ".join(response.message for response in responses)
-    return traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=merged_status)
+    merged_status = ", ".join(response for response in responses)
+    return merged_status
 
 
 class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):

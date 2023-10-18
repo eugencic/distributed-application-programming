@@ -6,6 +6,7 @@ service TrafficRegulation {
   rpc ReceiveDataForLogs (TrafficDataForLogs) returns (TrafficDataForLogsReceiveResponse);
   rpc GetTodayControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse);
   rpc GetLastWeekControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse);
+  rpc TrafficRegulationServiceStatus (TrafficRegulationServiceStatusRequest) returns (TrafficRegulationServiceStatusResponse);
 }
 
 message TrafficDataForLogs {
@@ -28,4 +29,11 @@ message IntersectionRequestForLogs {
 message TrafficRegulationResponse {
   int32 intersection_id = 1;
   repeated string logs = 2;
+}
+
+message TrafficRegulationServiceStatusRequest {
+}
+
+message TrafficRegulationServiceStatusResponse {
+  string message = 1;
 }

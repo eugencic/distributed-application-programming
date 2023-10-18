@@ -254,6 +254,28 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["RPC error: " + str(e)])
         return response
 
+    def TrafficRegulationServiceStatus(self, request, context):
+        try:
+            conn = psycopg2.connect(
+                dbname='traffic-regulation-db',
+                user='postgres',
+                password='397777',
+                host='localhost',
+                port='5432'
+            )
+            context.set_code(grpc.StatusCode.OK)
+            context.set_details("traffic-regulation-service-3 is healthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message="traffic-regulation"
+                                                                                             "-service-3: healthy")
+            conn.close()
+            return response
+        except Exception as e:
+            context.set_code(grpc.StatusCode.OK)
+            context.set_details("traffic-regulation-service-3 is unhealthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message="traffic-analytics"
+                                                                                             "-service-3: unhealthy")
+            return response
+
 
 def start():
     service_name = "traffic-regulation-service-3"

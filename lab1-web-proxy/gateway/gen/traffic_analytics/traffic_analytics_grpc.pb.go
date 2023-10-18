@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TrafficAnalytics_ReceiveDataForAnalytics_FullMethodName = "/analytics.TrafficAnalytics/ReceiveDataForAnalytics"
-	TrafficAnalytics_GetTodayStatistics_FullMethodName      = "/analytics.TrafficAnalytics/GetTodayStatistics"
-	TrafficAnalytics_GetLastWeekStatistics_FullMethodName   = "/analytics.TrafficAnalytics/GetLastWeekStatistics"
-	TrafficAnalytics_GetNextWeekPredictions_FullMethodName  = "/analytics.TrafficAnalytics/GetNextWeekPredictions"
+	TrafficAnalytics_ReceiveDataForAnalytics_FullMethodName       = "/analytics.TrafficAnalytics/ReceiveDataForAnalytics"
+	TrafficAnalytics_GetTodayStatistics_FullMethodName            = "/analytics.TrafficAnalytics/GetTodayStatistics"
+	TrafficAnalytics_GetLastWeekStatistics_FullMethodName         = "/analytics.TrafficAnalytics/GetLastWeekStatistics"
+	TrafficAnalytics_GetNextWeekPredictions_FullMethodName        = "/analytics.TrafficAnalytics/GetNextWeekPredictions"
+	TrafficAnalytics_TrafficAnalyticsServiceStatus_FullMethodName = "/analytics.TrafficAnalytics/TrafficAnalyticsServiceStatus"
 )
 
 // TrafficAnalyticsClient is the client API for TrafficAnalytics service.
@@ -33,6 +34,7 @@ type TrafficAnalyticsClient interface {
 	GetTodayStatistics(ctx context.Context, in *IntersectionRequestForAnalytics, opts ...grpc.CallOption) (*TrafficAnalyticsResponse, error)
 	GetLastWeekStatistics(ctx context.Context, in *IntersectionRequestForAnalytics, opts ...grpc.CallOption) (*TrafficAnalyticsResponse, error)
 	GetNextWeekPredictions(ctx context.Context, in *IntersectionRequestForAnalytics, opts ...grpc.CallOption) (*TrafficAnalyticsResponse, error)
+	TrafficAnalyticsServiceStatus(ctx context.Context, in *TrafficAnalyticsServiceStatusRequest, opts ...grpc.CallOption) (*TrafficAnalyticsServiceStatusResponse, error)
 }
 
 type trafficAnalyticsClient struct {
@@ -79,6 +81,15 @@ func (c *trafficAnalyticsClient) GetNextWeekPredictions(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *trafficAnalyticsClient) TrafficAnalyticsServiceStatus(ctx context.Context, in *TrafficAnalyticsServiceStatusRequest, opts ...grpc.CallOption) (*TrafficAnalyticsServiceStatusResponse, error) {
+	out := new(TrafficAnalyticsServiceStatusResponse)
+	err := c.cc.Invoke(ctx, TrafficAnalytics_TrafficAnalyticsServiceStatus_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TrafficAnalyticsServer is the server API for TrafficAnalytics service.
 // All implementations must embed UnimplementedTrafficAnalyticsServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type TrafficAnalyticsServer interface {
 	GetTodayStatistics(context.Context, *IntersectionRequestForAnalytics) (*TrafficAnalyticsResponse, error)
 	GetLastWeekStatistics(context.Context, *IntersectionRequestForAnalytics) (*TrafficAnalyticsResponse, error)
 	GetNextWeekPredictions(context.Context, *IntersectionRequestForAnalytics) (*TrafficAnalyticsResponse, error)
+	TrafficAnalyticsServiceStatus(context.Context, *TrafficAnalyticsServiceStatusRequest) (*TrafficAnalyticsServiceStatusResponse, error)
 	mustEmbedUnimplementedTrafficAnalyticsServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedTrafficAnalyticsServer) GetLastWeekStatistics(context.Context
 }
 func (UnimplementedTrafficAnalyticsServer) GetNextWeekPredictions(context.Context, *IntersectionRequestForAnalytics) (*TrafficAnalyticsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNextWeekPredictions not implemented")
+}
+func (UnimplementedTrafficAnalyticsServer) TrafficAnalyticsServiceStatus(context.Context, *TrafficAnalyticsServiceStatusRequest) (*TrafficAnalyticsServiceStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TrafficAnalyticsServiceStatus not implemented")
 }
 func (UnimplementedTrafficAnalyticsServer) mustEmbedUnimplementedTrafficAnalyticsServer() {}
 
@@ -191,6 +206,24 @@ func _TrafficAnalytics_GetNextWeekPredictions_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TrafficAnalytics_TrafficAnalyticsServiceStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrafficAnalyticsServiceStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrafficAnalyticsServer).TrafficAnalyticsServiceStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TrafficAnalytics_TrafficAnalyticsServiceStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrafficAnalyticsServer).TrafficAnalyticsServiceStatus(ctx, req.(*TrafficAnalyticsServiceStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TrafficAnalytics_ServiceDesc is the grpc.ServiceDesc for TrafficAnalytics service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var TrafficAnalytics_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNextWeekPredictions",
 			Handler:    _TrafficAnalytics_GetNextWeekPredictions_Handler,
+		},
+		{
+			MethodName: "TrafficAnalyticsServiceStatus",
+			Handler:    _TrafficAnalytics_TrafficAnalyticsServiceStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TrafficRegulation_ReceiveDataForLogs_FullMethodName     = "/main.TrafficRegulation/ReceiveDataForLogs"
-	TrafficRegulation_GetTodayControlLogs_FullMethodName    = "/main.TrafficRegulation/GetTodayControlLogs"
-	TrafficRegulation_GetLastWeekControlLogs_FullMethodName = "/main.TrafficRegulation/GetLastWeekControlLogs"
+	TrafficRegulation_ReceiveDataForLogs_FullMethodName             = "/main.TrafficRegulation/ReceiveDataForLogs"
+	TrafficRegulation_GetTodayControlLogs_FullMethodName            = "/main.TrafficRegulation/GetTodayControlLogs"
+	TrafficRegulation_GetLastWeekControlLogs_FullMethodName         = "/main.TrafficRegulation/GetLastWeekControlLogs"
+	TrafficRegulation_TrafficRegulationServiceStatus_FullMethodName = "/main.TrafficRegulation/TrafficRegulationServiceStatus"
 )
 
 // TrafficRegulationClient is the client API for TrafficRegulation service.
@@ -31,6 +32,7 @@ type TrafficRegulationClient interface {
 	ReceiveDataForLogs(ctx context.Context, in *TrafficDataForLogs, opts ...grpc.CallOption) (*TrafficDataForLogsReceiveResponse, error)
 	GetTodayControlLogs(ctx context.Context, in *IntersectionRequestForLogs, opts ...grpc.CallOption) (*TrafficRegulationResponse, error)
 	GetLastWeekControlLogs(ctx context.Context, in *IntersectionRequestForLogs, opts ...grpc.CallOption) (*TrafficRegulationResponse, error)
+	TrafficRegulationServiceStatus(ctx context.Context, in *TrafficRegulationServiceStatusRequest, opts ...grpc.CallOption) (*TrafficRegulationServiceStatusResponse, error)
 }
 
 type trafficRegulationClient struct {
@@ -68,6 +70,15 @@ func (c *trafficRegulationClient) GetLastWeekControlLogs(ctx context.Context, in
 	return out, nil
 }
 
+func (c *trafficRegulationClient) TrafficRegulationServiceStatus(ctx context.Context, in *TrafficRegulationServiceStatusRequest, opts ...grpc.CallOption) (*TrafficRegulationServiceStatusResponse, error) {
+	out := new(TrafficRegulationServiceStatusResponse)
+	err := c.cc.Invoke(ctx, TrafficRegulation_TrafficRegulationServiceStatus_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TrafficRegulationServer is the server API for TrafficRegulation service.
 // All implementations must embed UnimplementedTrafficRegulationServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type TrafficRegulationServer interface {
 	ReceiveDataForLogs(context.Context, *TrafficDataForLogs) (*TrafficDataForLogsReceiveResponse, error)
 	GetTodayControlLogs(context.Context, *IntersectionRequestForLogs) (*TrafficRegulationResponse, error)
 	GetLastWeekControlLogs(context.Context, *IntersectionRequestForLogs) (*TrafficRegulationResponse, error)
+	TrafficRegulationServiceStatus(context.Context, *TrafficRegulationServiceStatusRequest) (*TrafficRegulationServiceStatusResponse, error)
 	mustEmbedUnimplementedTrafficRegulationServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedTrafficRegulationServer) GetTodayControlLogs(context.Context,
 }
 func (UnimplementedTrafficRegulationServer) GetLastWeekControlLogs(context.Context, *IntersectionRequestForLogs) (*TrafficRegulationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLastWeekControlLogs not implemented")
+}
+func (UnimplementedTrafficRegulationServer) TrafficRegulationServiceStatus(context.Context, *TrafficRegulationServiceStatusRequest) (*TrafficRegulationServiceStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TrafficRegulationServiceStatus not implemented")
 }
 func (UnimplementedTrafficRegulationServer) mustEmbedUnimplementedTrafficRegulationServer() {}
 
@@ -158,6 +173,24 @@ func _TrafficRegulation_GetLastWeekControlLogs_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TrafficRegulation_TrafficRegulationServiceStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrafficRegulationServiceStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrafficRegulationServer).TrafficRegulationServiceStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TrafficRegulation_TrafficRegulationServiceStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrafficRegulationServer).TrafficRegulationServiceStatus(ctx, req.(*TrafficRegulationServiceStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TrafficRegulation_ServiceDesc is the grpc.ServiceDesc for TrafficRegulation service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var TrafficRegulation_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLastWeekControlLogs",
 			Handler:    _TrafficRegulation_GetLastWeekControlLogs_Handler,
+		},
+		{
+			MethodName: "TrafficRegulationServiceStatus",
+			Handler:    _TrafficRegulation_TrafficRegulationServiceStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

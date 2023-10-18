@@ -31,6 +31,13 @@ service TrafficAnalytics {
       body: "*"
     };
   };
+
+  rpc TrafficAnalyticsServiceStatus (TrafficAnalyticsServiceStatusRequest) returns (TrafficAnalyticsServiceStatusResponse) {
+    option (google.api.http) = {
+      post: "/get_traffic_analytics_service_status"
+      body: "*"
+    };
+  };
 }
 
 message TrafficDataForAnalytics {
@@ -56,4 +63,11 @@ message TrafficAnalyticsResponse {
   double average_vehicle_count = 3;
   string peak_hours = 4;
   float average_incidents = 5;
+}
+
+message TrafficAnalyticsServiceStatusRequest {
+}
+
+message TrafficAnalyticsServiceStatusResponse {
+  string message = 1;
 }

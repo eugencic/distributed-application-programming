@@ -40,3 +40,13 @@ class TrafficRegulationResponse(_message.Message):
     intersection_id: int
     logs: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, intersection_id: _Optional[int] = ..., logs: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class TrafficRegulationServiceStatusRequest(_message.Message):
+    __slots__ = []
+    def __init__(self) -> None: ...
+
+class TrafficRegulationServiceStatusResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...

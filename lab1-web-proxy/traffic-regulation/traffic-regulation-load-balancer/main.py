@@ -75,6 +75,24 @@ def forward_request(request, context, method):
     return response
 
 
+def collect_status_from_replicas():
+    responses = []
+    for replica_address in replica_addresses:
+        channel = grpc.insecure_channel(replica_address)
+        stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
+        try:
+            response = stub.TrafficRegulationServiceStatus(traffic_regulation_pb2.TrafficRegulationServiceStatusRequest())
+            responses.append(response.message)
+        except Exception as e:
+            print(f"Error getting status from replica {replica_address}: {str(e)}")
+    return responses
+
+
+def merge_status_responses(responses):
+    merged_status = ", ".join(response for response in responses)
+    return merged_status
+
+
 class LoadBalancerServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer):
     def __init__(self):
         pass
@@ -90,6 +108,20 @@ class LoadBalancerServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer
     def GetLastWeekControlLogs(self, request, context):
         response = forward_request(request, context, "GetLastWeekControlLogs")
         return response
+
+    def TrafficRegulationServiceStatus(self, request, context):
+        responses = collect_status_from_replicas()
+        merged_response = merge_status_responses(responses)
+        unhealthy_service = "unhealthy"
+        if unhealthy_service in str(merged_response):
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"One or more services experience troubles. Statuses: {str(merged_response)}")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"Statuses: {str(merged_response)}")
+            return response
+        else:
+            context.set_code(grpc.StatusCode.OK)
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
+            return response
 
 
 def start_load_balancer(host, port):

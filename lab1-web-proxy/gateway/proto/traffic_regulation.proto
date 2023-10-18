@@ -25,6 +25,12 @@ service TrafficRegulation {
       body: "*"
     };
   };
+  rpc TrafficRegulationServiceStatus (TrafficRegulationServiceStatusRequest) returns (TrafficRegulationServiceStatusResponse) {
+    option (google.api.http) = {
+      post: "/get_traffic_regulation_service_status"
+      body: "*"
+    };
+  };
 }
 
 message TrafficDataForLogs {
@@ -47,4 +53,11 @@ message IntersectionRequestForLogs {
 message TrafficRegulationResponse {
   int32 intersection_id = 1;
   repeated string logs = 2;
+}
+
+message TrafficRegulationServiceStatusRequest {
+}
+
+message TrafficRegulationServiceStatusResponse {
+  string message = 1;
 }
