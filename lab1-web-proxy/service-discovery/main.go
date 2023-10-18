@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"sync"
+	"time"
 )
 
 type Service struct {
@@ -18,6 +20,41 @@ var (
 	servicesMu sync.Mutex
 	services   = make(map[string]Service)
 )
+
+var startTime time.Time
+
+func init() {
+	startTime = time.Now()
+}
+
+func formatMemoryInMB(bytes uint64) string {
+	const megabyte = 1024 * 1024
+	return fmt.Sprintf("%.2f MB", float64(bytes)/float64(megabyte))
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	uptime := time.Since(startTime).Minutes()
+
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	statusInfo := map[string]interface{}{
+		"Consumed memory":      formatMemoryInMB(memStats.Sys),
+		"Number of Goroutines": runtime.NumGoroutine(),
+		"Uptime":               fmt.Sprintf("%.2f minutes", uptime),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	jsonBytes, err := json.Marshal(statusInfo)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(jsonBytes)
+}
 
 func registerService(w http.ResponseWriter, r *http.Request) {
 	var service Service
@@ -58,6 +95,7 @@ func getService(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	http.HandleFunc("/get_service_discovery_status", statusHandler)
 	http.HandleFunc("/register_service", registerService)
 	http.HandleFunc("/get_service_data", getService)
 

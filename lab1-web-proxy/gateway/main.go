@@ -9,12 +9,14 @@ import (
 	ta "gateway/gen/traffic_analytics"
 	tr "gateway/gen/traffic_regulation"
 	"github.com/golang/glog"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	muxRuntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 )
 
 type Service struct {
@@ -27,12 +29,75 @@ var (
 	gatewayName                  = "Gateway"
 	gatewayHost                  = "localhost"
 	gatewayPort                  = 6060
+	serviceDiscoveryName         = "service-discovery"
 	serviceDiscoveryEndpoint     = "http://localhost:9090"
 	trafficAnalyticsServiceName  = "traffic-analytics-load-balancer"
 	trafficRegulationServiceName = "traffic-regulation-load-balancer"
 )
 
 var logger = log.New(os.Stdout, "", log.LstdFlags)
+
+var startTime time.Time
+
+func init() {
+	startTime = time.Now()
+}
+
+func formatMemoryInMB(bytes uint64) string {
+	const megabyte = 1024 * 1024
+	return fmt.Sprintf("%.2f MB", float64(bytes)/float64(megabyte))
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	uptime := time.Since(startTime).Minutes()
+
+	dependentServices := []string{
+		serviceDiscoveryName,
+		trafficAnalyticsServiceName,
+		trafficRegulationServiceName,
+	}
+
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	statusInfo := map[string]interface{}{
+		"Consumed memory":      formatMemoryInMB(memStats.Sys),
+		"Number of Goroutines": runtime.NumGoroutine(),
+		"Dependent services":   dependentServices,
+		"Uptime":               fmt.Sprintf("%.2f minutes", uptime),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	jsonBytes, err := json.Marshal(statusInfo)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(jsonBytes)
+}
+
+func serviceDiscoveryStatusHandler(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Get(serviceDiscoveryEndpoint + "/get_service_discovery_status")
+	if err != nil {
+		http.Error(w, "Service discovery is not reachable", http.StatusServiceUnavailable)
+		return
+	}
+	defer resp.Body.Close()
+
+	for k, v := range resp.Header {
+		w.Header()[k] = v
+	}
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
+	if err != nil {
+		http.Error(w, "Error copying response from Service Discovery", http.StatusInternalServerError)
+		return
+	}
+}
 
 func registerWithServiceDiscovery() {
 	serviceInfo := Service{
@@ -124,7 +189,7 @@ func run() error {
 
 	flag.Parse()
 
-	grpcMux := runtime.NewServeMux()
+	grpcMux := muxRuntime.NewServeMux()
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
@@ -143,6 +208,10 @@ func run() error {
 	}
 
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/get_service_discovery_status", serviceDiscoveryStatusHandler)
+
+	mux.HandleFunc("/get_gateway_status", statusHandler)
 
 	mux.Handle("/", logRequestMiddleware(grpcMux))
 
