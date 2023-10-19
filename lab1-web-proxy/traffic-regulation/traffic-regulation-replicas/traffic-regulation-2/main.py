@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import threading
 import requests
+import time
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -163,6 +164,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
+        # time.sleep(3)
         if timeout_event.is_set():
             print("Request timed out before database operation.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
@@ -209,6 +211,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
+        # time.sleep(3)
         if timeout_event.is_set():
             print("Request timed out before database operation.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)

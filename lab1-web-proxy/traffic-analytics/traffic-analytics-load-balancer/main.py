@@ -3,7 +3,10 @@ import traffic_analytics_pb2
 import traffic_analytics_pb2_grpc
 from concurrent import futures
 import threading
+from threading import Timer
 import requests
+import time
+
 
 service_discovery_endpoint = "http://localhost:9090"
 load_balancer_name = "traffic-analytics-load-balancer"
@@ -58,6 +61,58 @@ def get_next_replica():
         return current_replica_index
 
 
+def print_problematic_service(replica_number):
+    print(f"Service at replica nr.{replica_number} is problematic. Consider taking action.")
+
+
+class LoadBalancerCircuitBreaker:
+    def __init__(self, error_threshold, time_window, timeout):
+        self.error_threshold = error_threshold
+        self.time_window = time_window
+        self.timeout = timeout
+        self.replica_errors = {}
+        self.timer = Timer(self.timeout, self.cleanup_all_errors)
+
+    def start_timer(self):
+        self.timer.start()
+
+    def cleanup_all_errors(self):
+        for replica_number in self.replica_errors:
+            now = time.time()
+            self.replica_errors[replica_number] = [error for error in self.replica_errors[replica_number] if
+                                                   now - error <= self.time_window]
+        self.timer = Timer(self.timeout, self.cleanup_all_errors)
+        self.timer.start()
+
+    def __call__(self, func):
+        def wrapper(request, context, method):
+            try:
+                response = func(request, context, method)
+                replica_number = current_replica_index + 1
+                print(f"Successful request at replica nr.{replica_number}.")
+                return response
+            except grpc.RpcError as e:
+                replica_number = current_replica_index + 1
+                if replica_number not in self.replica_errors:
+                    self.replica_errors[replica_number] = []
+                self.replica_errors[replica_number].append(time.time())
+                print(f"Unsuccessful request at replica nr.{replica_number}.")
+                self.cleanup_old_errors(replica_number)
+                if len(self.replica_errors[replica_number]) >= self.error_threshold:
+                    print_problematic_service(replica_number)
+        return wrapper
+
+    def cleanup_old_errors(self, replica_number):
+        now = time.time()
+        self.replica_errors[replica_number] = [error for error in self.replica_errors[replica_number] if
+                                               now - error <= self.time_window]
+
+
+circuit_breaker = LoadBalancerCircuitBreaker(error_threshold=3, time_window=35, timeout=30)
+circuit_breaker.start_timer()
+
+
+@circuit_breaker
 def forward_request(request, context, method):
     next_replica_index = get_next_replica()
     channel = grpc.insecure_channel(replica_addresses[next_replica_index])
@@ -122,11 +177,13 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
         if unhealthy_service in str(merged_response):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"One or more services experience troubles. Statuses: {str(merged_response)}")
-            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"Statuses: {str(merged_response)}")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(
+                message=f"Statuses: {str(merged_response)}")
             return response
         else:
             context.set_code(grpc.StatusCode.OK)
-            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(
+                message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
             return response
 
 

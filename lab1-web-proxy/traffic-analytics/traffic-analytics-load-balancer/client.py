@@ -68,6 +68,6 @@ def get_service_status():
 if __name__ == '__main__':
     # receive_data_for_analytics()
     # get_today_statistics(5)
-    # get_last_week_statistics(5)
+    get_last_week_statistics(5)
     # get_next_week_predictions(5)
-    get_service_status()
+    # get_service_status()

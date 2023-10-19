@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 import threading
 import requests
+import time
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
