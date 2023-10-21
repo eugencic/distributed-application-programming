@@ -54,9 +54,35 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     port='5432'
 )
 
+CRITICAL_LOAD_THRESHOLD = 60
 
 class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer):
+    def __init__(self):
+        self.request_count = 0
+        self.reset_interval = 1
+        self.reset_thread = threading.Thread(target=self.reset_counter, daemon=True)
+        self.lock = threading.Lock()
+
+    def increment_request_count(self):
+        with self.lock:
+            self.request_count += 1
+
+    def check_critical_load(self):
+        if self.request_count > CRITICAL_LOAD_THRESHOLD:
+            print(f"ALERT! Critical load exceeded: {self.request_count} requests per second.")
+
+    def reset_counter(self):
+        while True:
+            time.sleep(self.reset_interval)
+            with self.lock:
+                self.request_count = 0
+
+    def start_reset_thread(self):
+        self.reset_thread.start()
+
     def ReceiveDataForLogs(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for receiving data.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -154,6 +180,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         return response
 
     def GetTodayControlLogs(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for daily control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -201,6 +229,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         return response
 
     def GetLastWeekControlLogs(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for weekly control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -258,6 +288,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         return response
 
     def TrafficRegulationServiceStatus(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         try:
             conn = psycopg2.connect(
                 dbname='traffic-regulation-db',
@@ -287,10 +319,13 @@ def start():
     service_discovery_endpoint = "http://localhost:9090"
     register_service(service_name, service_host, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    traffic_regulation_pb2_grpc.add_TrafficRegulationServicer_to_server(TrafficRegulationServicer(), server)
+    service = TrafficRegulationServicer()
+    service.start_reset_thread()
+    traffic_regulation_pb2_grpc.add_TrafficRegulationServicer_to_server(service, server)
     server.add_insecure_port("localhost:8083")
     server.start()
     server.wait_for_termination()
+    service.reset_thread.join()
 
 
 if __name__ == '__main__':
