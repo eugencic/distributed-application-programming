@@ -1,3 +1,9 @@
+# Lab 1: Web Proxy 
+## Intelligent Traffic Lights Control and Analytics System
+
+> **Performed by:** Eugeniu Popa, FAF-202 \
+> **Verified by:** univ. asist. Maxim Voloșenco
+
 ### 1. Assess Application Suitability
 
 Here is why this application is relevant for microservices and why distributed systems are necessary:
@@ -24,25 +30,16 @@ The application's architecture will be organized in the following manner, with t
     - Processing and aggregating data from an external source.
     - Storing historical traffic and traffic lights signal events data and analytics results.
 
-- **User microservice**:
-    The user microservice will handle user authentication, registration, and the management of user roles and permissions.
-
-- **Notification microservice**:
-    It is responsible for delivering personalized notifications about the traffic situation. Its primary responsibilities include:
-    - Traffic situation notifications.
-    - Notification preferences and customization.
-
 System architecture diagram:
-https://github.com/eugencic/distributed-application-programming/blob/main/lab1-web-proxy/task/PAD_Laboratory_01.pdf
 ![Diagram](https://github.com/eugencic/distributed-application-programming/blob/main/lab1-web-proxy/docs/diagrams/system_architecture_diagram.jpg)
 
 
 ### 3. Choose Technology Stack and Communication Patterns:
 
-- Gateway and service discovery: `Java` programming language, `Spring Boot` and `Spring Cloud` frameworks.
-- Microservices: `Python` programming language and `Flask` framework.
-- Database: `PostgreSQL`.
-- Communication pattern: `REST API`.
+- Gateway and service discovery: `Go` programming language
+- Microservices: `Python` programming language
+- Databases: `PostgreSQL`
+- Communication pattern: `RPC`, `REST API`
 
 ### 4. Design Data Management:
 
@@ -378,6 +375,7 @@ https://github.com/eugencic/distributed-application-programming/blob/main/lab1-w
 
 ### 5. Set Up Deployment and Scaling:
 
-To ensure modularity and isolation, each microservice in our application will be deployed within its own `Docker` container. For this purpose, we will create individual Dockerfiles for each microservice, containing all the necessary instructions for building the corresponding container image.
+To ensure modularity and isolation, each microservice in the application will be deployed within its own `Docker` container. For this purpose, individual Dockerfiles will be created for each microservice, containing all the necessary instructions for building the corresponding container image.
 
-To streamline the orchestration of these containers and facilitate the management of the entire application, we will employ `Docker Compose`. Docker Compose simplifies the deployment process by creating and configuring containers, as well as establishing the necessary network connections between them.
+To streamline the orchestration of these containers and facilitate the management of the entire application, `Docker Compose` will be employed. Docker Compose simplifies the deployment process by creating and configuring containers, as well as establishing the necessary network connections between them.
+
