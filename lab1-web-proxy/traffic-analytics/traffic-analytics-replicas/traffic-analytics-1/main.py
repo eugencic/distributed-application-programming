@@ -490,7 +490,7 @@ def start():
     service_name = "traffic-analytics-service-1"
     service_host = "0.0.0.0"
     service_port = 7071
-    service_discovery_endpoint = "http://192.168.2.147:9090"
+    service_discovery_endpoint = "http://service-discovery:9090"
     register_service(service_name, service_host, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)

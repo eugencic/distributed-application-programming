@@ -1,5 +1,14 @@
 version: '3'
 services:
+  service_discovery:
+    container_name: service-discovery
+    ports:
+      - "9090:9090"
+    build:
+      context: ./service-discovery
+    networks:
+      - mynetwork
+
   traffic-analytics-database:
     container_name: traffic-analytics-database
     image: postgres:latest
@@ -9,7 +18,7 @@ services:
       POSTGRES_PASSWORD: 397777
       POSTGRES_DB: traffic-analytics-db
     networks:
-        - mynetwork
+      - mynetwork
 
   traffic-analytics-service-1:
     container_name: traffic-analytics-service-1
@@ -19,6 +28,7 @@ services:
     build:
       context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-1
     depends_on:
+      - service_discovery
       - traffic-analytics-database
     networks:
       - mynetwork
