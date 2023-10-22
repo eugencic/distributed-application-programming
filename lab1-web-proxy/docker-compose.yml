@@ -1,0 +1,28 @@
+version: '3'
+services:
+  traffic-analytics-database:
+    container_name: traffic-analytics-database
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: 397777
+      POSTGRES_DB: traffic-analytics-db
+    networks:
+        - mynetwork
+
+  traffic-analytics-service-1:
+    container_name: traffic-analytics-service-1
+    ports:
+      - "7071:7071"
+    restart: always
+    build:
+      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-1
+    depends_on:
+      - traffic-analytics-database
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge

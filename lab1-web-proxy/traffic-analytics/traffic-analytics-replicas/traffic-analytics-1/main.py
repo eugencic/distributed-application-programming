@@ -36,13 +36,12 @@ try:
         dbname='traffic-analytics-db',
         user='postgres',
         password='397777',
-        host='localhost',
-        port='5432'
+        host='traffic-analytics-database'
     )
     print("Connection to the traffic analytics database is successful!")
     conn.close()
 except Exception as e:
-    print(f"Error connecting to the traffic analytics database: {e}")
+    print(f"Error connecting to the traffic analytics database.")
 
 db_pool = psycopg2.pool.SimpleConnectionPool(
     minconn=1,
@@ -50,41 +49,65 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     dbname='traffic-analytics-db',
     user='postgres',
     password='397777',
-    host='localhost',
-    port='5432'
+    host='traffic-analytics-database'
 )
+print("Connection pool created.")
+
+CRITICAL_LOAD_THRESHOLD = 60
 
 
 class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
+    def __init__(self):
+        self.request_count = 0
+        self.reset_interval = 1
+        self.reset_thread = threading.Thread(target=self.reset_counter, daemon=True)
+        self.lock = threading.Lock()
+
+    def increment_request_count(self):
+        with self.lock:
+            self.request_count += 1
+
+    def check_critical_load(self):
+        if self.request_count > CRITICAL_LOAD_THRESHOLD:
+            print(f"ALERT! Critical load exceeded: {self.request_count} requests per second.")
+
+    def reset_counter(self):
+        while True:
+            time.sleep(self.reset_interval)
+            with self.lock:
+                self.request_count = 0
+
+    def start_reset_thread(self):
+        self.reset_thread.start()
+
     def ReceiveDataForAnalytics(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for receiving data.")
         timeout_seconds = 2
         timeout_event = threading.Event()
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
-            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out before "
-                                                                                        "database operation.")
+            context.set_details("Request timed out.")
+            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out "
-                                                                                                "before inserting "
-                                                                                                "data.")
+                    context.set_details("Request timed out.")
+                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
                 insert_query = """
                     INSERT INTO traffic_data (intersection_id, date, time, signal_status_1, vehicle_count, incident)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -113,23 +136,24 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         return response
 
     def GetTodayStatistics(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for daily statistics.")
         timeout_seconds = 2
         timeout_event = threading.Event()
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
-            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out before "
-                                                                                        "database operation.")
+            context.set_details("Request timed out.")
+            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -157,12 +181,10 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out "
-                                                                                                "before inserting "
-                                                                                                "data.")
+                    context.set_details("Request timed out.")
+                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
                 query = """
                     INSERT INTO traffic_analytics (
                     intersection_id, 
@@ -213,23 +235,24 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             return response
 
     def GetLastWeekStatistics(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for weekly statistics.")
         timeout_seconds = 2
         timeout_event = threading.Event()
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
-            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out before "
-                                                                                        "database operation.")
+            context.set_details("Request timed out.")
+            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -263,12 +286,10 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out "
-                                                                                                "before inserting "
-                                                                                                "data.")
+                    context.set_details("Request timed out.")
+                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
                 query = """
                     INSERT INTO traffic_analytics (
                         intersection_id, 
@@ -319,23 +340,24 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             return response
 
     def GetNextWeekPredictions(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         print("New request for next week predictions.")
         timeout_seconds = 2
         timeout_event = threading.Event()
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
-            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out before "
-                                                                                        "database operation.")
+            context.set_details("Request timed out.")
+            return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -371,12 +393,10 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out "
-                                                                                                "before inserting "
-                                                                                                "data.")
+                    context.set_details("Request timed out.")
+                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out.")
                 query = """
                     INSERT INTO traffic_analytics (
                         intersection_id, 
@@ -427,13 +447,30 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             return response
 
     def TrafficAnalyticsServiceStatus(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
         try:
+            timeout_seconds = 2
+            timeout_event = threading.Event()
+
+            def timeout_handler():
+                timeout_event.set()
+                # print("Timer is set.")
+
+            timer_thread = threading.Timer(timeout_seconds, timeout_handler)
+            timer_thread.start()
+            # time.sleep(3)
+            if timeout_event.is_set():
+                print("Request timed out.")
+                context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
+                context.set_details("Request timed out.")
+                return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                    message="Request timed out.")
             conn = psycopg2.connect(
                 dbname='traffic-analytics-db',
                 user='postgres',
                 password='397777',
-                host='localhost',
-                port='5432'
+                host='traffic-analytics-database'
             )
             context.set_code(grpc.StatusCode.OK)
             context.set_details("traffic-analytics-service-1 is healthy")
@@ -451,13 +488,13 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
 def start():
     service_name = "traffic-analytics-service-1"
-    service_host = "localhost"
+    service_host = "0.0.0.0"
     service_port = 7071
-    service_discovery_endpoint = "http://localhost:9090"
+    service_discovery_endpoint = "http://192.168.2.147:9090"
     register_service(service_name, service_host, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
-    server.add_insecure_port("localhost:7071")
+    server.add_insecure_port(f"{service_host}:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()

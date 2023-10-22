@@ -496,7 +496,7 @@ def start():
     register_service(service_name, service_host, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
-    server.add_insecure_port("localhost:7073")
+    server.add_insecure_port(f"{service_host}:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
