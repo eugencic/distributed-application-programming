@@ -338,6 +338,7 @@ def start():
     traffic_regulation_pb2_grpc.add_TrafficRegulationServicer_to_server(service, server)
     server.add_insecure_port("localhost:8083")
     server.start()
+    print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
     service.reset_thread.join()
 

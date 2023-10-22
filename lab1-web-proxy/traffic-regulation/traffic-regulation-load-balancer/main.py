@@ -65,7 +65,7 @@ def print_problematic_service(replica_number):
     print(f"Service at replica nr.{replica_number} is problematic. Consider taking action.")
 
 
-cache = TTLCache(maxsize=1000, ttl=60)
+cache = TTLCache(maxsize=1000, ttl=300)
 
 
 class LoadBalancerCircuitBreaker:

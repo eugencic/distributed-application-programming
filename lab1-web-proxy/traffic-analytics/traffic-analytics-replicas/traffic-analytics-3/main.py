@@ -498,6 +498,7 @@ def start():
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
     server.add_insecure_port("localhost:7073")
     server.start()
+    print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
 
 
