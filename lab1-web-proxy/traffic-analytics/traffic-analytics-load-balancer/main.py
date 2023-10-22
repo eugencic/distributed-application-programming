@@ -6,6 +6,7 @@ import threading
 from threading import Timer
 import requests
 import time
+from cachetools import TTLCache
 
 
 service_discovery_endpoint = "http://localhost:9090"
@@ -65,6 +66,9 @@ def print_problematic_service(replica_number):
     print(f"Service at replica nr.{replica_number} is problematic. Consider taking action.")
 
 
+cache = TTLCache(maxsize=1000, ttl=60)
+
+
 class LoadBalancerCircuitBreaker:
     def __init__(self, error_threshold, time_window, timeout):
         self.error_threshold = error_threshold
@@ -87,9 +91,19 @@ class LoadBalancerCircuitBreaker:
     def __call__(self, func):
         def wrapper(request, context, method):
             try:
+                if method in ["GetTodayStatistics", "GetLastWeekStatistics", "GetNextWeekPredictions"]:
+                    cache_key = (method, request.intersection_id)
+                    cached_data = cache.get(cache_key)
+                    if cached_data is not None:
+                        print("Cache is present...")
+                        return cached_data
+                print("Cache is not present...")
                 response = func(request, context, method)
                 replica_number = current_replica_index + 1
                 print(f"Successful request at replica nr.{replica_number}.")
+                if method in ["GetTodayStatistics", "GetLastWeekStatistics", "GetNextWeekPredictions"]:
+                    print("Storing cache...")
+                    cache[cache_key] = response
                 return response
             except grpc.RpcError as e:
                 replica_number = current_replica_index + 1

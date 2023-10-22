@@ -6,7 +6,7 @@ import threading
 from threading import Timer
 import requests
 import time
-
+from cachetools import TTLCache
 
 service_discovery_endpoint = "http://localhost:9090"
 load_balancer_name = "traffic-regulation-load-balancer"
@@ -65,6 +65,9 @@ def print_problematic_service(replica_number):
     print(f"Service at replica nr.{replica_number} is problematic. Consider taking action.")
 
 
+cache = TTLCache(maxsize=1000, ttl=60)
+
+
 class LoadBalancerCircuitBreaker:
     def __init__(self, error_threshold, time_window, timeout):
         self.error_threshold = error_threshold
@@ -87,9 +90,19 @@ class LoadBalancerCircuitBreaker:
     def __call__(self, func):
         def wrapper(request, context, method):
             try:
+                if method in ["GetTodayControlLogs", "GetLastWeekControlLogs"]:
+                    cache_key = (method, request.intersection_id)
+                    cached_data = cache.get(cache_key)
+                    if cached_data is not None:
+                        print("Cache is present...")
+                        return cached_data
+                print("Cache is not present...")
                 response = func(request, context, method)
                 replica_number = current_replica_index + 1
                 print(f"Successful request at replica nr.{replica_number}.")
+                if method in ["GetTodayControlLogs", "GetLastWeekControlLogs"]:
+                    print("Storing cache...")
+                    cache[cache_key] = response
                 return response
             except grpc.RpcError as e:
                 replica_number = current_replica_index + 1
@@ -100,6 +113,7 @@ class LoadBalancerCircuitBreaker:
                 self.cleanup_old_errors(replica_number)
                 if len(self.replica_errors[replica_number]) >= self.error_threshold:
                     print_problematic_service(replica_number)
+
         return wrapper
 
     def cleanup_old_errors(self, replica_number):
@@ -136,7 +150,8 @@ def collect_status_from_replicas():
         channel = grpc.insecure_channel(replica_address)
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         try:
-            response = stub.TrafficRegulationServiceStatus(traffic_regulation_pb2.TrafficRegulationServiceStatusRequest())
+            response = stub.TrafficRegulationServiceStatus(
+                traffic_regulation_pb2.TrafficRegulationServiceStatusRequest())
             responses.append(response.message)
         except Exception as e:
             print(f"Error getting status from replica {replica_address}: {str(e)}")
@@ -171,11 +186,13 @@ class LoadBalancerServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer
         if unhealthy_service in str(merged_response):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"One or more services experience troubles. Statuses: {str(merged_response)}")
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"Statuses: {str(merged_response)}")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(
+                message=f"Statuses: {str(merged_response)}")
             return response
         else:
             context.set_code(grpc.StatusCode.OK)
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(
+                message=f"All service replicas are healthy. Statuses: {str(merged_response)}")
             return response
 
 

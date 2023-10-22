@@ -56,6 +56,7 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
 
 CRITICAL_LOAD_THRESHOLD = 60
 
+
 class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer):
     def __init__(self):
         self.request_count = 0
@@ -68,7 +69,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             self.request_count += 1
 
     def check_critical_load(self):
-        if self.request_count > CRITICAL_LOAD_THRESHOLD:
+        if self.request_count >= CRITICAL_LOAD_THRESHOLD:
             print(f"ALERT! Critical load exceeded: {self.request_count} requests per second.")
 
     def reset_counter(self):
@@ -89,27 +90,25 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            print("Request timed out.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
-            return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out before database "
-                                                                                    "operation.")
+            context.set_details("Request timed out.")
+            return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out.")
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out before "
-                                                                                            "inserting data.")
+                    context.set_details("Request timed out.")
+                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out.")
                 insert_query = """
                     INSERT INTO traffic_data (intersection_id, date, time, signal_status, vehicle_count, incident)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -126,11 +125,10 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
-                    print("Request timed out before inserting data.")
+                    print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out before inserting data.")
-                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out before "
-                                                                                            "inserting data.")
+                    context.set_details("Request timed out.")
+                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out.")
                 cursor.execute(
                     """
                     SELECT log_messages FROM traffic_logs
@@ -188,17 +186,17 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
+            context.set_details("Request timed out.")
             return traffic_regulation_pb2.TrafficRegulationResponse(
-                logs=["Request timed out before database operation."])
+                logs=["Request timed out."])
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -237,17 +235,17 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            print("Timer is set.")
+            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
-            print("Request timed out before database operation.")
+            print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-            context.set_details("Request timed out before database operation.")
+            context.set_details("Request timed out.")
             return traffic_regulation_pb2.TrafficRegulationResponse(
-                logs=["Request timed out before database operation."])
+                logs=["Request timed out."])
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -290,6 +288,22 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def TrafficRegulationServiceStatus(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
+        timeout_seconds = 2
+        timeout_event = threading.Event()
+
+        def timeout_handler():
+            timeout_event.set()
+            # print("Timer is set.")
+
+        timer_thread = threading.Timer(timeout_seconds, timeout_handler)
+        timer_thread.start()
+        # time.sleep(3)
+        if timeout_event.is_set():
+            print("Request timed out.")
+            context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
+            context.set_details("Request timed out.")
+            return traffic_regulation_pb2.TrafficRegulationResponse(
+                logs=["Request timed out."])
         try:
             conn = psycopg2.connect(
                 dbname='traffic-regulation-db',
