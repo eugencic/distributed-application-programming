@@ -31,18 +31,47 @@ def register_service(service_name, service_host, service_port, service_discovery
         print(f"Error while registering {service_name}: {str(e)}")
 
 
+create_traffic_data_table_query = """
+CREATE TABLE IF NOT EXISTS traffic_data (
+    id SERIAL PRIMARY KEY,
+    intersection_id integer,
+    date date,
+    time time without time zone,
+    signal_status_1 character varying(255),
+    vehicle_count integer,
+    incident boolean
+);
+"""
+
+create_traffic_analytics_table_query = """
+CREATE TABLE IF NOT EXISTS traffic_analytics (
+    intersection_id integer,
+    date date,
+    average_vehicle_count double precision,
+    average_incidents double precision,
+    analytics_type character varying(10),
+    CONSTRAINT unique_intersection_date_type UNIQUE (intersection_id, date, analytics_type)
+);
+"""
+
 try:
     conn = psycopg2.connect(
         dbname='traffic-analytics-db',
         user='postgres',
         password='397777',
-        host='localhost',
-        port='5432'
+        host='traffic-analytics-database'
     )
     print("Connection to the traffic analytics database is successful!")
+    cursor = conn.cursor()
+    cursor.execute(create_traffic_data_table_query)
+    conn.commit()
+    cursor.execute(create_traffic_analytics_table_query)
+    conn.commit()
+    print("All necessary tables are created!")
+    cursor.close()
     conn.close()
 except Exception as e:
-    print(f"Error connecting to the traffic analytics database: {e}")
+    print(f"Error connecting to the traffic analytics database.")
 
 db_pool = psycopg2.pool.SimpleConnectionPool(
     minconn=1,
@@ -50,9 +79,9 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     dbname='traffic-analytics-db',
     user='postgres',
     password='397777',
-    host='localhost',
-    port='5432'
+    host='traffic-analytics-database'
 )
+print("Connection pool created.")
 
 CRITICAL_LOAD_THRESHOLD = 60
 
@@ -490,16 +519,18 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
 def start():
     service_name = "traffic-analytics-service-3"
-    service_host = "localhost"
+    service_host = "0.0.0.0"
     service_port = 7073
-    service_discovery_endpoint = "http://localhost:9090"
-    register_service(service_name, service_host, service_port, service_discovery_endpoint)
+    service_discovery_endpoint = "http://service-discovery:9090"
+    register_service(service_name, service_name, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(TrafficAnalyticsServicer(), server)
+    service = TrafficAnalyticsServicer()
+    traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(service, server)
     server.add_insecure_port(f"{service_host}:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
+    service.reset_thread.join()
 
 
 if __name__ == '__main__':

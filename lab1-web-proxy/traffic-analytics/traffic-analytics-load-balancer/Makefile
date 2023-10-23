@@ -8,3 +8,6 @@ clean-generated-files:
 .PHONY: all clean-generated-files
 
 delete: clean-generated-files
+
+requirements:
+	pip freeze > requirements.txt

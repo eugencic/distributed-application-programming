@@ -31,18 +31,46 @@ def register_service(service_name, service_host, service_port, service_discovery
         print(f"Error while registering {service_name}: {str(e)}")
 
 
+create_traffic_data_table_query = """
+CREATE TABLE IF NOT EXISTS traffic_data (
+    id serial PRIMARY KEY,
+    intersection_id integer,
+    date date,
+    time time without time zone,
+    signal_status character varying(255),
+    vehicle_count integer,
+    incident boolean
+);
+"""
+
+create_traffic_logs_table_query = """
+CREATE TABLE IF NOT EXISTS traffic_logs (
+    log_id serial PRIMARY KEY,
+    intersection_id integer,
+    date date,
+    log_messages text[],
+    CONSTRAINT unique_intersection_date UNIQUE (intersection_id, date)
+);
+"""
+
 try:
     conn = psycopg2.connect(
         dbname='traffic-regulation-db',
         user='postgres',
         password='397777',
-        host='localhost',
-        port='5432'
+        host='traffic-regulation-database'
     )
     print("Connection to the traffic regulation database is successful!")
+    cursor = conn.cursor()
+    cursor.execute(create_traffic_data_table_query)
+    conn.commit()
+    cursor.execute(create_traffic_logs_table_query)
+    conn.commit()
+    print("All necessary tables are created!")
+    cursor.close()
     conn.close()
 except Exception as e:
-    print(f"Error connecting to the traffic regulation database: {e}")
+    print(f"Error connecting to the traffic regulation database.")
 
 db_pool = psycopg2.pool.SimpleConnectionPool(
     minconn=1,
@@ -50,9 +78,9 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     dbname='traffic-regulation-db',
     user='postgres',
     password='397777',
-    host='localhost',
-    port='5432'
+    host='traffic-regulation-database'
 )
+print("Connection pool created.")
 
 CRITICAL_LOAD_THRESHOLD = 60
 
@@ -328,15 +356,15 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
 def start():
     service_name = "traffic-regulation-service-3"
-    service_host = "localhost"
+    service_host = "0.0.0.0"
     service_port = 8083
-    service_discovery_endpoint = "http://localhost:9090"
-    register_service(service_name, service_host, service_port, service_discovery_endpoint)
+    service_discovery_endpoint = "http://service-discovery:9090"
+    register_service(service_name, service_name, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service = TrafficRegulationServicer()
     service.start_reset_thread()
     traffic_regulation_pb2_grpc.add_TrafficRegulationServicer_to_server(service, server)
-    server.add_insecure_port("localhost:8083")
+    server.add_insecure_port(f"{service_host}:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()

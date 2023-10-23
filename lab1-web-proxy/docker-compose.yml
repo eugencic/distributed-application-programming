@@ -20,6 +20,17 @@ services:
     networks:
       - mynetwork
 
+  traffic-regulation-database:
+    container_name: traffic-regulation-database
+    image: postgres:latest
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_PASSWORD: 397777
+      POSTGRES_DB: traffic-regulation-db
+    networks:
+      - mynetwork
+
   traffic-analytics-service-1:
     container_name: traffic-analytics-service-1
     ports:
@@ -30,6 +41,115 @@ services:
     depends_on:
       - service_discovery
       - traffic-analytics-database
+    networks:
+      - mynetwork
+
+  traffic-analytics-service-2:
+    container_name: traffic-analytics-service-2
+    ports:
+      - "7072:7072"
+    restart: always
+    build:
+      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-2
+    depends_on:
+      - service_discovery
+      - traffic-analytics-database
+    networks:
+      - mynetwork
+
+  traffic-analytics-service-3:
+    container_name: traffic-analytics-service-3
+    ports:
+      - "7073:7073"
+    restart: always
+    build:
+      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-3
+    depends_on:
+      - service_discovery
+      - traffic-analytics-database
+    networks:
+      - mynetwork
+
+  traffic-regulation-service-1:
+    container_name: traffic-regulation-service-1
+    ports:
+      - "8081:8081"
+    restart: always
+    build:
+      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-1
+    depends_on:
+      - service_discovery
+      - traffic-regulation-database
+    networks:
+      - mynetwork
+
+  traffic-regulation-service-2:
+    container_name: traffic-regulation-service-2
+    ports:
+      - "8082:8082"
+    restart: always
+    build:
+      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-2
+    depends_on:
+      - service_discovery
+      - traffic-regulation-database
+    networks:
+      - mynetwork
+
+  traffic-regulation-service-3:
+    container_name: traffic-regulation-service-3
+    ports:
+      - "8083:8083"
+    restart: always
+    build:
+      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-3
+    depends_on:
+      - service_discovery
+      - traffic-regulation-database
+    networks:
+      - mynetwork
+
+  traffic-analytics-load-balancer:
+    container_name: traffic-analytics-load-balancer
+    ports:
+      - "7000:7000"
+    restart: always
+    build:
+      context: ./traffic-analytics/traffic-analytics-load-balancer
+    depends_on:
+      - service_discovery
+      - traffic-analytics-service-1
+      - traffic-analytics-service-2
+      - traffic-analytics-service-3
+    networks:
+      - mynetwork
+
+  traffic-regulation-load-balancer:
+    container_name: traffic-regulation-load-balancer
+    ports:
+      - "8000:8000"
+    restart: always
+    build:
+      context: ./traffic-regulation/traffic-regulation-load-balancer
+    depends_on:
+      - service_discovery
+      - traffic-regulation-service-1
+      - traffic-regulation-service-2
+      - traffic-regulation-service-3
+    networks:
+      - mynetwork
+
+  gateway:
+    container_name: gateway
+    ports:
+      - "6060:6060"
+    restart: always
+    build:
+      context: ./gateway
+    depends_on:
+      - service_discovery
+      - traffic-analytics-load-balancer
+      - traffic-regulation-load-balancer
     networks:
       - mynetwork
 

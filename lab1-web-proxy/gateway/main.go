@@ -30,7 +30,7 @@ var (
 	gatewayHost                  = "localhost"
 	gatewayPort                  = 6060
 	serviceDiscoveryName         = "service-discovery"
-	serviceDiscoveryEndpoint     = "http://localhost:9090"
+	serviceDiscoveryEndpoint     = "http://service-discovery:9090"
 	trafficAnalyticsServiceName  = "traffic-analytics-load-balancer"
 	trafficRegulationServiceName = "traffic-regulation-load-balancer"
 )

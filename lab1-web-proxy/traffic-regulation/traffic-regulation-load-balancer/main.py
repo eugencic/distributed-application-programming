@@ -1,3 +1,5 @@
+import sys
+
 import grpc
 import traffic_regulation_pb2
 import traffic_regulation_pb2_grpc
@@ -8,9 +10,10 @@ import requests
 import time
 from cachetools import TTLCache
 
-service_discovery_endpoint = "http://localhost:9090"
+
+service_discovery_endpoint = "http://service-discovery:9090"
 load_balancer_name = "traffic-regulation-load-balancer"
-load_balancer_host = "localhost"
+load_balancer_host = "0.0.0.0"
 load_balancer_port = 8000
 number_of_replicas = 3
 replica_addresses = []
@@ -96,7 +99,6 @@ class LoadBalancerCircuitBreaker:
                     if cached_data is not None:
                         print("Cache is present...")
                         return cached_data
-                print("Cache is not present...")
                 response = func(request, context, method)
                 replica_number = current_replica_index + 1
                 print(f"Successful request at replica nr.{replica_number}.")
@@ -202,12 +204,18 @@ def start_load_balancer(host, port):
     server.add_insecure_port(f"{host}:{port}")
     server.start()
     print(f"Load balancer {load_balancer_name} listening on port {port}...")
-    register_load_balancer(load_balancer_name, host, port)
-    for i in range(number_of_replicas):
-        replica = get_service_info(f"traffic-regulation-service-{i + 1}")
-        replica = "" + str(replica[1]) + ":" + str(replica[2])
-        print(f"{load_balancer_name}-{i + 1} registered.")
-        replica_addresses.append(replica)
+    register_load_balancer(load_balancer_name, load_balancer_name, port)
+    print("Waiting for the replicas to start...")
+    time.sleep(15)
+    try:
+        for i in range(number_of_replicas):
+            replica = get_service_info(f"traffic-regulation-service-{i + 1}")
+            replica = "" + str(replica[1]) + ":" + str(replica[2])
+            print(f"{replica} registered.")
+            replica_addresses.append(replica)
+    except Exception as e:
+        print(f"Error getting info of all services: {str(e)}")
+        server.stop(0)
     server.wait_for_termination()
 
 
