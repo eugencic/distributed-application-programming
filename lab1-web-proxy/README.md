@@ -32,7 +32,7 @@ The application's architecture will be organized in the following manner, with t
     - Storing historical traffic and traffic lights signal events data and analytics results.
 
 System architecture diagram:
-![Diagram](https://github.com/eugencic/distributed-application-programming/blob/main/lab1-web-proxy/docs/diagrams/system_architecture_diagram.jpg)
+![Diagram](https://github.com/eugencic/distributed-application-programming/blob/main/lab1-web-proxy/docs/system_architecture_diagram.jpg)
 
 
 ### 3. Choose Technology Stack and Communication Patterns:

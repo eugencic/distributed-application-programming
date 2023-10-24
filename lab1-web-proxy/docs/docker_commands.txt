@@ -1,8 +1,6 @@
-// Command to build the project using Docker Compose
+// Main commands
 
-docker-compose up --build  
-
-// Commands to build the images
+// Build the images
 
 docker build -t service-discovery . 
 docker build -t traffic-analytics-service-1 .
@@ -15,16 +13,24 @@ docker build -t traffic-analytics-load-balancer .
 docker build -t traffic-regulation-load-balancer . 
 docker build -t gateway . 
 
-// Commands to remove all containers
+// Tag and push images to Docker Hub
+
+docker tag image:latest username/image:latest
+docker push username/image:latest
+
+// Build the project using Docker Compose
+
+docker-compose up --build 
+
+
+// Additional commands
+
+// Remove all containers
 
 docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
 
-// Command to remove all images
+// Remove all images
 
 docker rmi $(docker images -a -q)
 
-// Commands to generate requirements.txt file
-
-pip install pipreqs
-pipreqs .
