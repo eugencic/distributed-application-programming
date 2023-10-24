@@ -93,7 +93,7 @@ class LoadBalancerCircuitBreaker:
     def __call__(self, func):
         def wrapper(request, context, method):
             try:
-                if method in ["GetTodayControlLogs", "GetLastWeekControlLogs"]:
+                if method in ["GetLastWeekControlLogs"]:
                     cache_key = (method, request.intersection_id)
                     cached_data = cache.get(cache_key)
                     if cached_data is not None:
@@ -102,7 +102,7 @@ class LoadBalancerCircuitBreaker:
                 response = func(request, context, method)
                 replica_number = current_replica_index + 1
                 print(f"Successful request at replica nr.{replica_number}.")
-                if method in ["GetTodayControlLogs", "GetLastWeekControlLogs"]:
+                if method in ["GetLastWeekControlLogs"]:
                     print("Storing cache...")
                     cache[cache_key] = response
                 return response

@@ -1,4 +1,5 @@
-# Lab 1: Web Proxy 
+# Laboratory work Nr.1: Web Proxy 
+
 ## Intelligent Traffic Lights Control and Analytics System
 
 > **Performed by:** Eugeniu Popa, FAF-202 \
