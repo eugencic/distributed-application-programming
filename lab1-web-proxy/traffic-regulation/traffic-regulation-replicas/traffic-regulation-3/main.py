@@ -337,8 +337,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 dbname='traffic-regulation-db',
                 user='postgres',
                 password='397777',
-                host='localhost',
-                port='5432'
+                host='traffic-regulation-database'
             )
             context.set_code(grpc.StatusCode.OK)
             context.set_details("traffic-regulation-service-3 is healthy")

@@ -500,8 +500,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 dbname='traffic-analytics-db',
                 user='postgres',
                 password='397777',
-                host='localhost',
-                port='5432'
+                host='traffic-analytics-database'
             )
             context.set_code(grpc.StatusCode.OK)
             context.set_details("traffic-analytics-service-3 is healthy")
