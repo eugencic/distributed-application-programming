@@ -206,7 +206,6 @@ def start_load_balancer(host, port):
     print(f"Load balancer {load_balancer_name} listening on port {port}...")
     register_load_balancer(load_balancer_name, load_balancer_name, port)
     print("Waiting for the replicas to start...")
-    time.sleep(15)
     try:
         for i in range(number_of_replicas):
             replica = get_service_info(f"traffic-regulation-service-{i + 1}")

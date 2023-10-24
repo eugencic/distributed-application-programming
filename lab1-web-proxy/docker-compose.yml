@@ -17,6 +17,11 @@ services:
     environment:
       POSTGRES_PASSWORD: 397777
       POSTGRES_DB: traffic-analytics-db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
     networks:
       - mynetwork
 
@@ -28,128 +33,147 @@ services:
     environment:
       POSTGRES_PASSWORD: 397777
       POSTGRES_DB: traffic-regulation-db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
     networks:
       - mynetwork
 
   traffic-analytics-service-1:
     container_name: traffic-analytics-service-1
+    image: eugencic/lab1-web-proxy-traffic-analytics-service-1:latest
     ports:
       - "7071:7071"
     restart: always
-    build:
-      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-1
     depends_on:
-      - service_discovery
-      - traffic-analytics-database
+      service_discovery:
+        condition: service_started
+      traffic-analytics-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-analytics-service-2:
     container_name: traffic-analytics-service-2
+    image: eugencic/lab1-web-proxy-traffic-analytics-service-2:latest
     ports:
       - "7072:7072"
     restart: always
-    build:
-      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-2
     depends_on:
-      - service_discovery
-      - traffic-analytics-database
+      service_discovery:
+        condition: service_started
+      traffic-analytics-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-analytics-service-3:
     container_name: traffic-analytics-service-3
+    image: eugencic/lab1-web-proxy-traffic-analytics-service-3:latest
     ports:
       - "7073:7073"
     restart: always
-    build:
-      context: ./traffic-analytics/traffic-analytics-replicas/traffic-analytics-3
     depends_on:
-      - service_discovery
-      - traffic-analytics-database
+      service_discovery:
+        condition: service_started
+      traffic-analytics-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-regulation-service-1:
     container_name: traffic-regulation-service-1
+    image: eugencic/lab1-web-proxy-traffic-regulation-service-1:latest
     ports:
       - "8081:8081"
     restart: always
-    build:
-      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-1
     depends_on:
-      - service_discovery
-      - traffic-regulation-database
+      service_discovery:
+        condition: service_started
+      traffic-regulation-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-regulation-service-2:
     container_name: traffic-regulation-service-2
+    image: eugencic/lab1-web-proxy-traffic-regulation-service-2:latest
     ports:
       - "8082:8082"
     restart: always
-    build:
-      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-2
     depends_on:
-      - service_discovery
-      - traffic-regulation-database
+      service_discovery:
+        condition: service_started
+      traffic-regulation-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-regulation-service-3:
     container_name: traffic-regulation-service-3
+    image: eugencic/lab1-web-proxy-traffic-regulation-service-3:latest
     ports:
       - "8083:8083"
     restart: always
-    build:
-      context: ./traffic-regulation/traffic-regulation-replicas/traffic-regulation-3
     depends_on:
-      - service_discovery
-      - traffic-regulation-database
+      service_discovery:
+        condition: service_started
+      traffic-regulation-database:
+        condition: service_healthy
     networks:
       - mynetwork
 
   traffic-analytics-load-balancer:
     container_name: traffic-analytics-load-balancer
+    image: eugencic/lab1-web-proxy-traffic-analytics-load-balancer:latest
     ports:
       - "7000:7000"
     restart: always
-    build:
-      context: ./traffic-analytics/traffic-analytics-load-balancer
     depends_on:
-      - service_discovery
-      - traffic-analytics-service-1
-      - traffic-analytics-service-2
-      - traffic-analytics-service-3
+      service_discovery:
+        condition: service_started
+      traffic-analytics-service-1:
+        condition: service_started
+      traffic-analytics-service-2:
+        condition: service_started
+      traffic-analytics-service-3:
+        condition: service_started
     networks:
       - mynetwork
 
   traffic-regulation-load-balancer:
     container_name: traffic-regulation-load-balancer
+    image: eugencic/lab1-web-proxy-traffic-regulation-load-balancer:latest
     ports:
       - "8000:8000"
     restart: always
-    build:
-      context: ./traffic-regulation/traffic-regulation-load-balancer
     depends_on:
-      - service_discovery
-      - traffic-regulation-service-1
-      - traffic-regulation-service-2
-      - traffic-regulation-service-3
+      service_discovery:
+        condition: service_started
+      traffic-regulation-service-1:
+        condition: service_started
+      traffic-regulation-service-2:
+        condition: service_started
+      traffic-regulation-service-3:
+        condition: service_started
     networks:
       - mynetwork
 
   gateway:
     container_name: gateway
+    image: eugencic/lab1-web-proxy-gateway:latest
     ports:
       - "6060:6060"
     restart: always
-    build:
-      context: ./gateway
     depends_on:
-      - service_discovery
-      - traffic-analytics-load-balancer
-      - traffic-regulation-load-balancer
+      service_discovery:
+        condition: service_started
+      traffic-analytics-load-balancer:
+        condition: service_started
+      traffic-regulation-load-balancer:
+        condition: service_started
     networks:
       - mynetwork
 
