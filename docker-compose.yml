@@ -176,6 +176,12 @@ services:
     networks:
       - mynetwork
 
+  cache-service:
+    container_name: cache-service
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
 networks:
   mynetwork:
     driver: bridge

@@ -15,26 +15,26 @@ service TrafficAnalytics {
   };
   rpc GetTodayStatistics (IntersectionRequestForAnalytics) returns (TrafficAnalyticsResponse) {
     option (google.api.http) = {
-      post: "/get_today_statistics"
+      post: "/today_statistics"
       body: "*"
     };
   };
   rpc GetLastWeekStatistics (IntersectionRequestForAnalytics) returns (TrafficAnalyticsResponse) {
     option (google.api.http) = {
-      post: "/get_last_week_statistics"
+      post: "/last_week_statistics"
       body: "*"
     };
   };
   rpc GetNextWeekPredictions (IntersectionRequestForAnalytics) returns (TrafficAnalyticsResponse) {
     option (google.api.http) = {
-      post: "/get_next_week_predictions"
+      post: "/next_week_predictions"
       body: "*"
     };
   };
 
   rpc TrafficAnalyticsServiceStatus (TrafficAnalyticsServiceStatusRequest) returns (TrafficAnalyticsServiceStatusResponse) {
     option (google.api.http) = {
-      post: "/get_traffic_analytics_service_status"
+      get: "/get_traffic_analytics_service_status"
       body: "*"
     };
   };

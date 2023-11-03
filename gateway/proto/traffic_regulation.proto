@@ -15,19 +15,19 @@ service TrafficRegulation {
   };
   rpc GetTodayControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse) {
     option (google.api.http) = {
-      post: "/get_today_control_logs"
+      post: "/today_control_logs"
       body: "*"
     };
   };
   rpc GetLastWeekControlLogs (IntersectionRequestForLogs) returns (TrafficRegulationResponse) {
     option (google.api.http) = {
-      post: "/get_last_week_control_logs"
+      post: "/last_week_control_logs"
       body: "*"
     };
   };
   rpc TrafficRegulationServiceStatus (TrafficRegulationServiceStatusRequest) returns (TrafficRegulationServiceStatusResponse) {
     option (google.api.http) = {
-      post: "/get_traffic_regulation_service_status"
+      get: "/get_traffic_regulation_service_status"
       body: "*"
     };
   };

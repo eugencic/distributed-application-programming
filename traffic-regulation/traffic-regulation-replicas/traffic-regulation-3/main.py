@@ -58,7 +58,8 @@ try:
         dbname='traffic-regulation-db',
         user='postgres',
         password='397777',
-        host='traffic-regulation-database'
+        host='localhost',
+        port='5432'
     )
     print("Connection to the traffic regulation database is successful!")
     cursor = conn.cursor()
@@ -78,7 +79,8 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     dbname='traffic-regulation-db',
     user='postgres',
     password='397777',
-    host='traffic-regulation-database'
+    host='localhost',
+    port='5432'
 )
 print("Connection pool created.")
 
@@ -122,7 +124,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
