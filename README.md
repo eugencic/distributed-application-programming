@@ -39,7 +39,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     GET http://localhost:6060/get_traffic_analytics_service_status
     ```
 
-  - Send data for analytics:
+  - Send data for analytics (should be accessed first to add some data):
 
     ```
     POST http://localhost:6060/receive_data_for_analytics
@@ -86,7 +86,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     GET http://localhost:6060/get_traffic_regulation_service_status
     ```
 
-  - Send data for logs (in order to make logs, signal_status_1 has to be 1 and vehicle_count > 30, or signal_status_1 has to be 2 and vehicle_count < 5):
+  - Send data for logs (should be accessed first to add some data; in order to make logs, signal_status_1 has to be 1 and vehicle_count > 30, or signal_status_1 has to be 2 and vehicle_count < 5):
 
     ```
     POST http://localhost:6060/receive_data_for_logs 
