@@ -35,7 +35,6 @@ service TrafficAnalytics {
   rpc TrafficAnalyticsServiceStatus (TrafficAnalyticsServiceStatusRequest) returns (TrafficAnalyticsServiceStatusResponse) {
     option (google.api.http) = {
       get: "/get_traffic_analytics_service_status"
-      body: "*"
     };
   };
 }

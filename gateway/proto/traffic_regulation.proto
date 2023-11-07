@@ -28,7 +28,6 @@ service TrafficRegulation {
   rpc TrafficRegulationServiceStatus (TrafficRegulationServiceStatusRequest) returns (TrafficRegulationServiceStatusResponse) {
     option (google.api.http) = {
       get: "/get_traffic_regulation_service_status"
-      body: "*"
     };
   };
 }

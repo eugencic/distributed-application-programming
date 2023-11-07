@@ -137,14 +137,6 @@ func request_TrafficRegulation_TrafficRegulationServiceStatus_0(ctx context.Cont
 	var protoReq TrafficRegulationServiceStatusRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.TrafficRegulationServiceStatus(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -153,14 +145,6 @@ func request_TrafficRegulation_TrafficRegulationServiceStatus_0(ctx context.Cont
 func local_request_TrafficRegulation_TrafficRegulationServiceStatus_0(ctx context.Context, marshaler runtime.Marshaler, server TrafficRegulationServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TrafficRegulationServiceStatusRequest
 	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.TrafficRegulationServiceStatus(ctx, &protoReq)
 	return msg, metadata, err
@@ -206,7 +190,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_control_logs"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/today_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -231,7 +215,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_control_logs"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/last_week_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -248,7 +232,7 @@ func RegisterTrafficRegulationHandlerServer(ctx context.Context, mux *runtime.Se
 
 	})
 
-	mux.Handle("POST", pattern_TrafficRegulation_TrafficRegulationServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TrafficRegulation_TrafficRegulationServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -342,7 +326,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/get_today_control_logs"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetTodayControlLogs", runtime.WithHTTPPathPattern("/today_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -364,7 +348,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/get_last_week_control_logs"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/main.TrafficRegulation/GetLastWeekControlLogs", runtime.WithHTTPPathPattern("/last_week_control_logs"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -380,7 +364,7 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 
 	})
 
-	mux.Handle("POST", pattern_TrafficRegulation_TrafficRegulationServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TrafficRegulation_TrafficRegulationServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -408,9 +392,9 @@ func RegisterTrafficRegulationHandlerClient(ctx context.Context, mux *runtime.Se
 var (
 	pattern_TrafficRegulation_ReceiveDataForLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"receive_data_for_logs"}, ""))
 
-	pattern_TrafficRegulation_GetTodayControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_today_control_logs"}, ""))
+	pattern_TrafficRegulation_GetTodayControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"today_control_logs"}, ""))
 
-	pattern_TrafficRegulation_GetLastWeekControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_last_week_control_logs"}, ""))
+	pattern_TrafficRegulation_GetLastWeekControlLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"last_week_control_logs"}, ""))
 
 	pattern_TrafficRegulation_TrafficRegulationServiceStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_traffic_regulation_service_status"}, ""))
 )

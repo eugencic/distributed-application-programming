@@ -171,14 +171,6 @@ func request_TrafficAnalytics_TrafficAnalyticsServiceStatus_0(ctx context.Contex
 	var protoReq TrafficAnalyticsServiceStatusRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.TrafficAnalyticsServiceStatus(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -187,14 +179,6 @@ func request_TrafficAnalytics_TrafficAnalyticsServiceStatus_0(ctx context.Contex
 func local_request_TrafficAnalytics_TrafficAnalyticsServiceStatus_0(ctx context.Context, marshaler runtime.Marshaler, server TrafficAnalyticsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TrafficAnalyticsServiceStatusRequest
 	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.TrafficAnalyticsServiceStatus(ctx, &protoReq)
 	return msg, metadata, err
@@ -240,7 +224,7 @@ func RegisterTrafficAnalyticsHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetTodayStatistics", runtime.WithHTTPPathPattern("/get_today_statistics"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetTodayStatistics", runtime.WithHTTPPathPattern("/today_statistics"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -265,7 +249,7 @@ func RegisterTrafficAnalyticsHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetLastWeekStatistics", runtime.WithHTTPPathPattern("/get_last_week_statistics"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetLastWeekStatistics", runtime.WithHTTPPathPattern("/last_week_statistics"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -290,7 +274,7 @@ func RegisterTrafficAnalyticsHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetNextWeekPredictions", runtime.WithHTTPPathPattern("/get_next_week_predictions"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetNextWeekPredictions", runtime.WithHTTPPathPattern("/next_week_predictions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -307,7 +291,7 @@ func RegisterTrafficAnalyticsHandlerServer(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("POST", pattern_TrafficAnalytics_TrafficAnalyticsServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TrafficAnalytics_TrafficAnalyticsServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -401,7 +385,7 @@ func RegisterTrafficAnalyticsHandlerClient(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetTodayStatistics", runtime.WithHTTPPathPattern("/get_today_statistics"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetTodayStatistics", runtime.WithHTTPPathPattern("/today_statistics"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -423,7 +407,7 @@ func RegisterTrafficAnalyticsHandlerClient(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetLastWeekStatistics", runtime.WithHTTPPathPattern("/get_last_week_statistics"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetLastWeekStatistics", runtime.WithHTTPPathPattern("/last_week_statistics"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -445,7 +429,7 @@ func RegisterTrafficAnalyticsHandlerClient(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetNextWeekPredictions", runtime.WithHTTPPathPattern("/get_next_week_predictions"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analytics.TrafficAnalytics/GetNextWeekPredictions", runtime.WithHTTPPathPattern("/next_week_predictions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -461,7 +445,7 @@ func RegisterTrafficAnalyticsHandlerClient(ctx context.Context, mux *runtime.Ser
 
 	})
 
-	mux.Handle("POST", pattern_TrafficAnalytics_TrafficAnalyticsServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_TrafficAnalytics_TrafficAnalyticsServiceStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -489,11 +473,11 @@ func RegisterTrafficAnalyticsHandlerClient(ctx context.Context, mux *runtime.Ser
 var (
 	pattern_TrafficAnalytics_ReceiveDataForAnalytics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"receive_data_for_analytics"}, ""))
 
-	pattern_TrafficAnalytics_GetTodayStatistics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_today_statistics"}, ""))
+	pattern_TrafficAnalytics_GetTodayStatistics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"today_statistics"}, ""))
 
-	pattern_TrafficAnalytics_GetLastWeekStatistics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_last_week_statistics"}, ""))
+	pattern_TrafficAnalytics_GetLastWeekStatistics_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"last_week_statistics"}, ""))
 
-	pattern_TrafficAnalytics_GetNextWeekPredictions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_next_week_predictions"}, ""))
+	pattern_TrafficAnalytics_GetNextWeekPredictions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"next_week_predictions"}, ""))
 
 	pattern_TrafficAnalytics_TrafficAnalyticsServiceStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_traffic_analytics_service_status"}, ""))
 )

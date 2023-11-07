@@ -8,6 +8,7 @@ from datetime import datetime
 import threading
 import requests
 import time
+import os
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -60,6 +61,8 @@ try:
         user='postgres',
         password='397777',
         host='traffic-analytics-database'
+        # host='localhost',
+        # port='5433'
     )
     print("Connection to the traffic analytics database is successful!")
     cursor = conn.cursor()
@@ -80,6 +83,8 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     user='postgres',
     password='397777',
     host='traffic-analytics-database'
+    # host='localhost',
+    # port='5433'
 )
 print("Connection pool created.")
 
@@ -496,36 +501,35 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 context.set_details("Request timed out.")
                 return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
                     message="Request timed out.")
+            service_name = os.environ.get("SERVICE_NAME", "traffic-analytics-service-1")
             conn = psycopg2.connect(
                 dbname='traffic-analytics-db',
                 user='postgres',
                 password='397777',
                 host='traffic-analytics-database'
+                # host='localhost',
+                # port='5433'
             )
             context.set_code(grpc.StatusCode.OK)
-            context.set_details("traffic-analytics-service-3 is healthy")
-            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message="traffic-analytics-service"
-                                                                                           "-3: healthy")
+            context.set_details(f"{service_name} is healthy")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"{service_name}: healthy")
             conn.close()
             return response
         except Exception as e:
+            service_name = os.environ.get("SERVICE_NAME", "traffic-analytics-service-1")
             context.set_code(grpc.StatusCode.OK)
-            context.set_details("traffic-analytics-service-3 is unhealthy")
-            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message="traffic-analytics-service"
-                                                                                           "-3: unhealthy")
+            context.set_details(f"{service_name} is unhealthy")
+            response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(f"{service_name}: unhealthy")
             return response
 
 
-def start():
-    service_name = "traffic-analytics-service-3"
-    service_host = "0.0.0.0"
-    service_port = 7073
-    service_discovery_endpoint = "http://service-discovery:9090"
+def start(service_name, service_port, service_discovery_endpoint):
     register_service(service_name, service_name, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service = TrafficAnalyticsServicer()
+    service.start_reset_thread()
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(service, server)
-    server.add_insecure_port(f"{service_host}:{service_port}")
+    server.add_insecure_port(f"0.0.0.0:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
@@ -533,4 +537,8 @@ def start():
 
 
 if __name__ == '__main__':
-    start()
+    start(
+        os.environ.get("SERVICE_NAME", "traffic-analytics-service-1"),
+        int(os.environ.get("SERVICE_PORT", 7071)),
+        os.environ.get("SERVICE_DISCOVERY_ENDPOINT", "http://service-discovery:9090")
+    )

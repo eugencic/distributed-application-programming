@@ -8,6 +8,7 @@ from datetime import datetime
 import threading
 import requests
 import time
+import os
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -58,8 +59,7 @@ try:
         dbname='traffic-regulation-db',
         user='postgres',
         password='397777',
-        host='localhost',
-        port='5432'
+        host='traffic-regulation-database'
     )
     print("Connection to the traffic regulation database is successful!")
     cursor = conn.cursor()
@@ -79,8 +79,7 @@ db_pool = psycopg2.pool.SimpleConnectionPool(
     dbname='traffic-regulation-db',
     user='postgres',
     password='397777',
-    host='localhost',
-    port='5432'
+    host='traffic-regulation-database'
 )
 print("Connection pool created.")
 
@@ -124,7 +123,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        time.sleep(3)
+        # time.sleep(3)
         if timeout_event.is_set():
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
@@ -335,6 +334,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             return traffic_regulation_pb2.TrafficRegulationResponse(
                 logs=["Request timed out."])
         try:
+            service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
             conn = psycopg2.connect(
                 dbname='traffic-regulation-db',
                 user='postgres',
@@ -342,30 +342,25 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 host='traffic-regulation-database'
             )
             context.set_code(grpc.StatusCode.OK)
-            context.set_details("traffic-regulation-service-3 is healthy")
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message="traffic-regulation"
-                                                                                             "-service-3: healthy")
+            context.set_details(f"{service_name} is healthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}: healthy")
             conn.close()
             return response
         except Exception as e:
+            service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
             context.set_code(grpc.StatusCode.OK)
-            context.set_details("traffic-regulation-service-3 is unhealthy")
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message="traffic-analytics"
-                                                                                             "-service-3: unhealthy")
+            context.set_details(f"{service_name} is unhealthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}: unhealthy")
             return response
 
 
-def start():
-    service_name = "traffic-regulation-service-3"
-    service_host = "0.0.0.0"
-    service_port = 8083
-    service_discovery_endpoint = "http://service-discovery:9090"
+def start(service_name, service_port, service_discovery_endpoint):
     register_service(service_name, service_name, service_port, service_discovery_endpoint)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service = TrafficRegulationServicer()
     service.start_reset_thread()
     traffic_regulation_pb2_grpc.add_TrafficRegulationServicer_to_server(service, server)
-    server.add_insecure_port(f"{service_host}:{service_port}")
+    server.add_insecure_port(f"0.0.0.0:{service_port}")
     server.start()
     print(f"{service_name} listening on port {service_port}...")
     server.wait_for_termination()
@@ -373,4 +368,8 @@ def start():
 
 
 if __name__ == '__main__':
-    start()
+    start(
+        os.environ.get("SERVICE_NAME", "traffic-regulation-service-1"),
+        int(os.environ.get("SERVICE_PORT", 8081)),
+        os.environ.get("SERVICE_DISCOVERY_ENDPOINT", "http://service-discovery:9090")
+    )
