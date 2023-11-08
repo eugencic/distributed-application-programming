@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   service_discovery:
     container_name: service-discovery
@@ -109,8 +110,10 @@ services:
       - SERVICE_NAME=traffic-regulation-service-1
       - SERVICE_PORT=8081
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=8001
     ports:
       - "8081:8081"
+      - "8001:8001"
     restart: always
     depends_on:
       service_discovery:
@@ -129,8 +132,10 @@ services:
       - SERVICE_NAME=traffic-regulation-service-2
       - SERVICE_PORT=8082
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=8002
     ports:
       - "8082:8081"
+      - "8002:8002"
     restart: always
     depends_on:
       service_discovery:
@@ -149,8 +154,10 @@ services:
       - SERVICE_NAME=traffic-regulation-service-3
       - SERVICE_PORT=8083
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=8003
     ports:
       - "8083:8081"
+      - "8003:8003"
     restart: always
     depends_on:
       service_discovery:
@@ -219,6 +226,24 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9000:9090"
+    networks:
+      - mynetwork
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - mynetwork
 
 networks:
   mynetwork:

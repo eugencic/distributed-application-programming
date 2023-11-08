@@ -9,6 +9,11 @@ import threading
 import requests
 import time
 import os
+from prometheus_client import start_http_server, Counter
+
+
+messages_counter = Counter('traffic_regulation_messages', 'Total message count')
+errors_counter = Counter('traffic_regulation_errors', 'Total error count')
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -96,6 +101,12 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def increment_request_count(self):
         with self.lock:
             self.request_count += 1
+
+    def increment_message_count(self):
+        messages_counter.inc()
+
+    def increment_error_count(self):
+        errors_counter.inc()
 
     def check_critical_load(self):
         if self.request_count >= CRITICAL_LOAD_THRESHOLD:
@@ -195,10 +206,12 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 timer_thread.cancel()
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()
             response.message = f"Traffic data for intersection nr.{request.intersection_id} received successfully."
+            self.increment_message_count()
             db_pool.putconn(conn)
         except Exception as e:
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()
             response.message = f"Error saving traffic data: {str(e)}"
+            self.increment_error_count()
         except grpc.RpcError as e:
             print(f"RPC error: {str(e)}")
             context.set_code(e.code())
@@ -209,6 +222,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def GetTodayControlLogs(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
+        self.increment_message_count()
         print("New request for daily control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -245,6 +259,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except Exception as e:
             print(f"Error: {str(e)}")
+            logging.error(f"Error: {str(e)}")
+            self.increment_error_count()
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
@@ -258,6 +274,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def GetLastWeekControlLogs(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
+        self.increment_message_count()
         print("New request for weekly control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -304,6 +321,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except Exception as e:
             print(f"Error: {str(e)}")
+            self.increment_error_count()
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
@@ -350,12 +368,14 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
             context.set_code(grpc.StatusCode.OK)
             context.set_details(f"{service_name} is unhealthy")
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}: unhealthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(
+                message=f"{service_name}: unhealthy")
             return response
 
 
-def start(service_name, service_port, service_discovery_endpoint):
+def start(service_name, service_port, service_discovery_endpoint, prometheus_port):
     register_service(service_name, service_name, service_port, service_discovery_endpoint)
+    start_http_server(prometheus_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     service = TrafficRegulationServicer()
     service.start_reset_thread()
@@ -371,5 +391,6 @@ if __name__ == '__main__':
     start(
         os.environ.get("SERVICE_NAME", "traffic-regulation-service-1"),
         int(os.environ.get("SERVICE_PORT", 8081)),
-        os.environ.get("SERVICE_DISCOVERY_ENDPOINT", "http://service-discovery:9090")
+        os.environ.get("SERVICE_DISCOVERY_ENDPOINT", "http://service-discovery:9090"),
+        int(os.environ.get("PROMETHEUS_PORT", 8001))
     )

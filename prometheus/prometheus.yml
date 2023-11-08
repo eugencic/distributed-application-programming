@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 3s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: traffic-regulation-service
+    static_configs:
+      - targets: ['traffic-regulation-service-1:8001', 'traffic-regulation-service-2:8002', 'traffic-regulation-service-3:8003']
