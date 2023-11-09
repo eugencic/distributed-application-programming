@@ -9,11 +9,14 @@ import threading
 import requests
 import time
 import os
-from prometheus_client import start_http_server, Counter
+from prometheus_client import start_http_server, Counter, Enum
 
-
-messages_counter = Counter('traffic_regulation_messages', 'Total message count')
-errors_counter = Counter('traffic_regulation_errors', 'Total error count')
+requests_counter = Counter('t_reg_requests_total', 'Requests', ['endpoint', 'message'])
+timeouts_counter = Counter('t_reg_timeouts_total', 'Timeouts', ['endpoint', 'message'])
+success_counter = Counter('t_reg_successful_requests_total', 'Successful Requests', ['endpoint', 'message'])
+error_counter = Counter('t_reg_errors_total', 'Errors', ['endpoint', 'message'])
+database_state = Enum('t_reg_database_state', 'Database State', states=['connected', 'not connected'])
+register_state = Enum('t_reg_register_state', 'Register State', states=['registered', 'not registered'])
 
 
 def register_service(service_name, service_host, service_port, service_discovery_endpoint):
@@ -30,10 +33,13 @@ def register_service(service_name, service_host, service_port, service_discovery
             headers=headers,
         )
         if response.status_code == 201:
+            register_state.state('registered')
             print(f"Registered {service_name} with service discovery.")
         else:
+            register_state.state('not registered')
             print(f"Failed to register {service_name} with service discovery: {response.status_code}")
     except Exception as e:
+        register_state.state('not registered')
         print(f"Error while registering {service_name}: {str(e)}")
 
 
@@ -66,6 +72,7 @@ try:
         password='397777',
         host='traffic-regulation-database'
     )
+    database_state.state('connected')
     print("Connection to the traffic regulation database is successful!")
     cursor = conn.cursor()
     cursor.execute(create_traffic_data_table_query)
@@ -75,7 +82,8 @@ try:
     print("All necessary tables are created!")
     cursor.close()
     conn.close()
-except Exception as e:
+except (Exception,) as e:
+    database_state.state('not connected')
     print(f"Error connecting to the traffic regulation database.")
 
 db_pool = psycopg2.pool.SimpleConnectionPool(
@@ -102,12 +110,6 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         with self.lock:
             self.request_count += 1
 
-    def increment_message_count(self):
-        messages_counter.inc()
-
-    def increment_error_count(self):
-        errors_counter.inc()
-
     def check_critical_load(self):
         if self.request_count >= CRITICAL_LOAD_THRESHOLD:
             print(f"ALERT! Critical load exceeded: {self.request_count} requests per second.")
@@ -124,18 +126,19 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def ReceiveDataForLogs(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
+        requests_counter.labels('receive_data_for_logs', 'New request for receiving data.').inc()
         print("New request for receiving data.")
         timeout_seconds = 2
         timeout_event = threading.Event()
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
+            timeouts_counter.labels('receive_data_for_logs', 'Request timed out.').inc()
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out.")
@@ -145,6 +148,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
+                    timeouts_counter.labels('receive_data_for_logs', 'Request timed out.').inc()
                     print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
                     context.set_details("Request timed out.")
@@ -165,6 +169,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             with conn.cursor() as cursor:
                 # time.sleep(3)
                 if timeout_event.is_set():
+                    timeouts_counter.labels('receive_data_for_logs', 'Request timed out.').inc()
                     print("Request timed out.")
                     context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
                     context.set_details("Request timed out.")
@@ -205,16 +210,17 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 conn.commit()
                 timer_thread.cancel()
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()
+            success_counter.labels('receive_data_for_logs', f"Traffic data received successfully.").inc()
             response.message = f"Traffic data for intersection nr.{request.intersection_id} received successfully."
-            self.increment_message_count()
             db_pool.putconn(conn)
-        except Exception as e:
+        except (Exception,) as e:
+            error_counter.labels('receive_data_for_logs', 'An error occurred.').inc()
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()
             response.message = f"Error saving traffic data: {str(e)}"
-            self.increment_error_count()
         except grpc.RpcError as e:
+            error_counter.labels('receive_data_for_logs', 'RPC error.').inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message=str(e))
         return response
@@ -222,7 +228,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def GetTodayControlLogs(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
-        self.increment_message_count()
+        requests_counter.labels('today_control_logs', 'New request for daily control logs.').inc()
         print("New request for daily control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -235,6 +241,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
+            timeouts_counter.labels('today_control_logs', 'Request timed out.').inc()
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out.")
@@ -253,20 +260,21 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 print("Retrieved data:", results)
                 conn.commit()
                 timer_thread.cancel()
+            success_counter.labels('today_control_logs', f"Traffic data retrieved successfully.").inc()
             response = traffic_regulation_pb2.TrafficRegulationResponse()
             response.intersection_id = request.intersection_id
             response.logs.extend([str(result[0]) for result in results])
             db_pool.putconn(conn)
-        except Exception as e:
+        except (Exception,) as e:
+            error_counter.labels('today_control_logs', 'An error occurred.').inc()
             print(f"Error: {str(e)}")
-            logging.error(f"Error: {str(e)}")
-            self.increment_error_count()
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
         except grpc.RpcError as e:
+            error_counter.labels('today_control_logs', 'RPC error').inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["RPC error: " + str(e)])
         return response
@@ -274,7 +282,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def GetLastWeekControlLogs(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
-        self.increment_message_count()
+        requests_counter.labels('last_week_control_logs', 'New request for weekly control logs.').inc()
         print("New request for weekly control logs.")
         timeout_seconds = 2
         timeout_event = threading.Event()
@@ -287,6 +295,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
+            timeouts_counter.labels('last_week_control_logs', 'Request timed out.').inc()
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out.")
@@ -310,6 +319,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 print("Retrieved data:", results)
                 conn.commit()
                 timer_thread.cancel()
+            success_counter.labels('last_week_control_logs', f"Traffic data retrieved successfully.").inc()
             response = traffic_regulation_pb2.TrafficRegulationResponse()
             response.intersection_id = request.intersection_id
             logs = []
@@ -319,15 +329,16 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                     logs.append(log_message)
             response.logs.extend(logs)
             db_pool.putconn(conn)
-        except Exception as e:
+        except (Exception,) as e:
+            error_counter.labels('last_week_control_logs', 'An error occurred.').inc()
             print(f"Error: {str(e)}")
-            self.increment_error_count()
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
         except grpc.RpcError as e:
+            error_counter.labels('today_control_logs', 'RPC error.').inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["RPC error: " + str(e)])
         return response
@@ -346,6 +357,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         timer_thread.start()
         # time.sleep(3)
         if timeout_event.is_set():
+            timeouts_counter.labels('traffic_regulation_service_status', 'Request timed out.').inc()
             print("Request timed out.")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out.")
@@ -361,10 +373,14 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             )
             context.set_code(grpc.StatusCode.OK)
             context.set_details(f"{service_name} is healthy")
+            database_state.state('connected')
+            success_counter.labels('traffic_regulation_service_status', f"Status healthy").inc()
             response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}: healthy")
             conn.close()
             return response
-        except Exception as e:
+        except (Exception,) as e:
+            database_state.state('not connected')
+            error_counter.labels('traffic_regulation_service_status', 'Status unhealthy').inc()
             service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
             context.set_code(grpc.StatusCode.OK)
             context.set_details(f"{service_name} is unhealthy")
