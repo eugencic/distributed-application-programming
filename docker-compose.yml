@@ -19,8 +19,8 @@ services:
       POSTGRES_DB: traffic-analytics-db
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 30s
-      timeout: 15s
+      interval: 15s
+      timeout: 10s
       retries: 5
     networks:
       - mynetwork
@@ -35,8 +35,8 @@ services:
       POSTGRES_DB: traffic-regulation-db
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 30s
-      timeout: 15s
+      interval: 15s
+      timeout: 10s
       retries: 5
     networks:
       - mynetwork
@@ -50,8 +50,10 @@ services:
       - SERVICE_NAME=traffic-analytics-service-1
       - SERVICE_PORT=7071
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=7001
     ports:
       - "7071:7071"
+      - "7001:7001"
     restart: always
     depends_on:
       service_discovery:
@@ -70,8 +72,10 @@ services:
       - SERVICE_NAME=traffic-analytics-service-2
       - SERVICE_PORT=7072
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=7002
     ports:
       - "7072:7071"
+      - "7002:7002"
     restart: always
     depends_on:
       service_discovery:
@@ -90,8 +94,10 @@ services:
       - SERVICE_NAME=traffic-analytics-service-3
       - SERVICE_PORT=7073
       - SERVICE_DISCOVERY_ENDPOINT=http://service-discovery:9090
+      - PROMETHEUS_PORT=7003
     ports:
       - "7073:7071"
+      - "8003:8003"
     restart: always
     depends_on:
       service_discovery:
