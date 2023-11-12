@@ -38,7 +38,7 @@ def register_service(service_name, service_host, service_port, service_discovery
         else:
             register_state.state('not registered')
             print(f"Failed to register {service_name} with service discovery: {response.status_code}")
-    except Exception as e:
+    except (Exception,) as e:
         register_state.state('not registered')
         print(f"Error while registering {service_name}: {str(e)}")
 
@@ -140,7 +140,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")
