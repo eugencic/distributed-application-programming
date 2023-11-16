@@ -9,9 +9,8 @@ def receive_data_for_analytics():
         request = traffic_analytics_pb2.TrafficDataForAnalytics(
             intersection_id=5,
             signal_status_1=9,
-            vehicle_count=50,
             incident=False,
-            date="10.10.2023",
+            date="2023-11-15",
             time="19:11"
         )
         response = stub.ReceiveDataForAnalytics(request)
@@ -66,8 +65,8 @@ def get_service_status():
 
 
 if __name__ == '__main__':
-    # receive_data_for_analytics()
+    receive_data_for_analytics()
     # get_today_statistics(5)
-    get_last_week_statistics(5)
+    # get_last_week_statistics(5)
     # get_next_week_predictions(5)
     # get_service_status()

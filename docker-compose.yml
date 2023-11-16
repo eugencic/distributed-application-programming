@@ -175,7 +175,9 @@ services:
 
   traffic-analytics-load-balancer:
     container_name: traffic-analytics-load-balancer
-    image: eugencic/traffic-analytics-load-balancer:latest
+#    image: eugencic/traffic-analytics-load-balancer:latest
+    build:
+      context: ./traffic-analytics/traffic-analytics-load-balancer
     ports:
       - "7000:7000"
     restart: always

@@ -198,7 +198,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()

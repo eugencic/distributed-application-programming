@@ -1,5 +1,3 @@
-import sys
-
 import grpc
 import traffic_analytics_pb2
 import traffic_analytics_pb2_grpc
@@ -9,12 +7,10 @@ from threading import Timer
 import requests
 import time
 from cachetools import TTLCache
-import signal
 
 
 service_discovery_endpoint = "http://service-discovery:9090"
 load_balancer_name = "traffic-analytics-load-balancer"
-load_balancer_host = "0.0.0.0"
 load_balancer_port = 7000
 number_of_replicas = 3
 replica_addresses = []
@@ -66,7 +62,7 @@ def get_next_replica():
 
 
 def print_problematic_service(replica_number):
-    print(f"Service at replica nr.{replica_number} is problematic. Consider taking action.")
+    print(f"Service at replica nr.{replica_number} is problematic. The circuit breaker is open.")
 
 
 cache = TTLCache(maxsize=1000, ttl=60)
@@ -77,6 +73,7 @@ class LoadBalancerCircuitBreaker:
         self.error_threshold = error_threshold
         self.time_window = time_window
         self.timeout = timeout
+        self.replica_statuses = {}
         self.replica_errors = {}
         self.timer = Timer(self.timeout, self.cleanup_all_errors)
 
@@ -91,19 +88,60 @@ class LoadBalancerCircuitBreaker:
         self.timer = Timer(self.timeout, self.cleanup_all_errors)
         self.timer.start()
 
+    def cleanup_old_errors(self, replica_number):
+        now = time.time()
+        self.replica_errors[replica_number] = [error for error in self.replica_errors[replica_number] if
+                                               now - error <= self.time_window]
+
+    def is_replica_open(self, replica_number):
+        replica_state = self.replica_statuses.get(replica_number, 'closed') == 'open'
+        return replica_state
+
+    def find_next_closed_replica(self):
+        for _ in range(number_of_replicas):
+            next_replica_index = get_next_replica()
+            next_replica_number = next_replica_index + 1
+            if not self.is_replica_open(next_replica_number):
+                return next_replica_index
+        return None
+
+    def health_check(self, replica_number):
+        current_replica_address = replica_addresses[replica_number - 1]
+        print(f"The circuit breaker is tripped. Starting health check for replica nr.{replica_number}")
+        try:
+            channel = grpc.insecure_channel(current_replica_address)
+            stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
+            errors = 0
+            for _ in range(self.error_threshold - 1):
+                try:
+                    stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
+                    print(f"Health check request succeeded for replica nr.{replica_number}.")
+                except grpc.RpcError as e:
+                    print(f"Health check request failed for replica nr.{replica_number}.")
+                    errors += 1
+                    self.replica_errors[replica_number].append(time.time())
+            if len(self.replica_errors[replica_number]) >= self.error_threshold:
+                print(f"Replica nr.{replica_number} has reached/crossed the threshold.")
+                print_problematic_service(replica_number)
+                self.cleanup_old_errors(replica_number)
+                self.replica_statuses[replica_number] = 'open'
+            else:
+                print(f"At least one health check request passed for replica nr.{replica_number}.")
+        except Exception as e:
+            print(f"Error during health check for replica nr.{current_replica_address}: {str(e)}")
+
     def __call__(self, func):
         def wrapper(request, context, method):
             try:
-                if method in ["GetTodayStatistics", "GetLastWeekStatistics", "GetNextWeekPredictions"]:
+                if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"]:
                     cache_key = (method, request.intersection_id)
                     cached_data = cache.get(cache_key)
                     if cached_data is not None:
                         print("Cache is present...")
                         return cached_data
                 response = func(request, context, method)
-                replica_number = current_replica_index + 1
-                print(f"Successful request at replica nr.{replica_number}.")
-                if method in ["GetTodayStatistics", "GetLastWeekStatistics", "GetNextWeekPredictions"]:
+                print(f"Successful request at replica nr.{current_replica_index + 1}.")
+                if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"]:
                     print("Storing cache...")
                     cache[cache_key] = response
                 return response
@@ -113,15 +151,8 @@ class LoadBalancerCircuitBreaker:
                     self.replica_errors[replica_number] = []
                 self.replica_errors[replica_number].append(time.time())
                 print(f"Unsuccessful request at replica nr.{replica_number}.")
-                self.cleanup_old_errors(replica_number)
-                if len(self.replica_errors[replica_number]) >= self.error_threshold:
-                    print_problematic_service(replica_number)
+                self.health_check(replica_number)
         return wrapper
-
-    def cleanup_old_errors(self, replica_number):
-        now = time.time()
-        self.replica_errors[replica_number] = [error for error in self.replica_errors[replica_number] if
-                                               now - error <= self.time_window]
 
 
 circuit_breaker = LoadBalancerCircuitBreaker(error_threshold=3, time_window=35, timeout=30)
@@ -130,8 +161,17 @@ circuit_breaker.start_timer()
 
 @circuit_breaker
 def forward_request(request, context, method):
-    next_replica_index = get_next_replica()
-    channel = grpc.insecure_channel(replica_addresses[next_replica_index])
+    global current_replica_index
+    current_replica_index = get_next_replica()
+    replica_number = current_replica_index + 1
+    if circuit_breaker.is_replica_open(replica_number):
+        print(f"Circuit breaker is open on replica nr.{replica_number}. Redirecting the request...")
+        next_closed_replica_index = circuit_breaker.find_next_closed_replica()
+        if next_closed_replica_index is not None:
+            current_replica_index = next_closed_replica_index
+        else:
+            print("All replicas are open!")
+    channel = grpc.insecure_channel(replica_addresses[current_replica_index])
     stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
     if method == "ReceiveDataForAnalytics":
         response = stub.ReceiveDataForAnalytics(request)
@@ -203,13 +243,13 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
             return response
 
 
-def start_load_balancer(host, port):
+def start():
+    register_load_balancer(load_balancer_name, load_balancer_name, load_balancer_port)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(LoadBalancerServicer(), server)
-    server.add_insecure_port(f"{host}:{port}")
+    server.add_insecure_port(f"0.0.0.0:{load_balancer_port}")
     server.start()
-    print(f"Load balancer {load_balancer_name} listening on port {port}...")
-    register_load_balancer(load_balancer_name, load_balancer_name, port)
+    print(f"{load_balancer_name} listening on port {load_balancer_port}...")
     print("Waiting for the replicas to start...")
     try:
         for i in range(number_of_replicas):
@@ -224,4 +264,4 @@ def start_load_balancer(host, port):
 
 
 if __name__ == '__main__':
-    start_load_balancer(load_balancer_host, load_balancer_port)
+    start()
