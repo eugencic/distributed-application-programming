@@ -61,10 +61,6 @@ def get_next_replica():
         return current_replica_index
 
 
-def print_problematic_service(replica_number):
-    print(f"Service at replica nr.{replica_number} is problematic. The circuit breaker is open.")
-
-
 cache = TTLCache(maxsize=1000, ttl=60)
 
 
@@ -75,6 +71,7 @@ class LoadBalancerCircuitBreaker:
         self.timeout = timeout
         self.replica_statuses = {}
         self.replica_errors = {}
+        self.health_check_locks = {}
         self.timer = Timer(self.timeout, self.cleanup_all_errors)
 
     def start_timer(self):
@@ -105,6 +102,31 @@ class LoadBalancerCircuitBreaker:
                 return next_replica_index
         return None
 
+    def acquire_health_check_lock(self, replica_number):
+        # print(f"Health check thread lock for replica nr.{replica_number} is acquired.")
+        if replica_number not in self.health_check_locks:
+            self.health_check_locks[replica_number] = threading.Lock()
+        self.health_check_locks[replica_number].acquire()
+
+    def release_health_check_lock(self, replica_number):
+        # print(f"Health check thread lock for replica nr.{replica_number} is released.")
+        self.health_check_locks[replica_number].release()
+
+    def is_health_check_in_progress(self, replica_number):
+        # print(f"Checking if health check is in progress for replica nr.{replica_number}...")
+        return self.health_check_locks.get(replica_number, threading.Lock()).locked()
+
+    def health_check_thread(self, replica_number):
+        try:
+            if self.is_health_check_in_progress(replica_number):
+                print(f"Health check is already in progress for replica nr.{replica_number}")
+                return
+            self.acquire_health_check_lock(replica_number)
+            # print(f"Starting health check thread for replica nr.{replica_number}...")
+            self.health_check(replica_number)
+        finally:
+            self.release_health_check_lock(replica_number)
+
     def health_check(self, replica_number):
         current_replica_address = replica_addresses[replica_number - 1]
         print(f"The circuit breaker is tripped. Starting health check for replica nr.{replica_number}")
@@ -115,18 +137,20 @@ class LoadBalancerCircuitBreaker:
             for _ in range(self.error_threshold - 1):
                 try:
                     stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
-                    print(f"Health check request succeeded for replica nr.{replica_number}.")
+                    print(f"Health check request succeeded for replica nr.{replica_number}")
                 except grpc.RpcError as e:
-                    print(f"Health check request failed for replica nr.{replica_number}.")
+                    print(f"Health check request failed for replica nr.{replica_number}")
                     errors += 1
                     self.replica_errors[replica_number].append(time.time())
             if len(self.replica_errors[replica_number]) >= self.error_threshold:
-                print(f"Replica nr.{replica_number} has reached/crossed the threshold.")
-                print_problematic_service(replica_number)
+                print(f"Replica nr.{replica_number} has reached the threshold.")
+                print(f"Service at replica nr.{replica_number} is problematic. The circuit breaker is open.")
                 self.cleanup_old_errors(replica_number)
                 self.replica_statuses[replica_number] = 'open'
             else:
-                print(f"At least one health check request passed for replica nr.{replica_number}.")
+                print(f"At least one health check request passed for replica nr.{replica_number}")
+                print(f"Service at replica nr.{replica_number} is healthy. The circuit breaker is closed.")
+                self.replica_statuses[replica_number] = 'closed'
         except Exception as e:
             print(f"Error during health check for replica nr.{current_replica_address}: {str(e)}")
 
@@ -151,7 +175,15 @@ class LoadBalancerCircuitBreaker:
                     self.replica_errors[replica_number] = []
                 self.replica_errors[replica_number].append(time.time())
                 print(f"Unsuccessful request at replica nr.{replica_number}.")
-                self.health_check(replica_number)
+                self.replica_statuses[replica_number] = 'open'
+                if not self.is_health_check_in_progress(replica_number):
+                    # print(f"Health check thread for replica nr.{replica_number} is available.")
+                    threading.Thread(target=self.health_check_thread, args=(replica_number, )).start()
+                context.set_code(grpc.StatusCode.INTERNAL)
+                context.set_details(f"Request failed at replica nr.{replica_number}")
+                response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                    message=f"Request failed at replica nr.{replica_number}")
+                return response
         return wrapper
 
 

@@ -201,7 +201,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")
@@ -530,7 +530,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")
