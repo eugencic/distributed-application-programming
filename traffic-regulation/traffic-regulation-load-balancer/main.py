@@ -1,5 +1,3 @@
-import sys
-
 import grpc
 import traffic_regulation_pb2
 import traffic_regulation_pb2_grpc
@@ -135,6 +133,10 @@ def forward_request(request, context, method):
     stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
     if method == "ReceiveDataForLogs":
         response = stub.ReceiveDataForLogs(request)
+    elif method == "AddDataRegulation":
+        response = stub.AddDataRegulation(request)
+    elif method == "DeleteDataRegulation":
+        response = stub.DeleteDataRegulation(request)
     elif method == "GetTodayControlLogs":
         response = stub.GetTodayControlLogs(request)
     elif method == "GetLastWeekControlLogs":
@@ -171,6 +173,14 @@ class LoadBalancerServicer(traffic_regulation_pb2_grpc.TrafficRegulationServicer
 
     def ReceiveDataForLogs(self, request, context):
         response = forward_request(request, context, "ReceiveDataForLogs")
+        return response
+
+    def AddDataRegulation(self, request, context):
+        response = forward_request(request, context, "AddDataRegulation")
+        return response
+
+    def DeleteDataRegulation(self, request, context):
+        response = forward_request(request, context, "DeleteDataRegulation")
         return response
 
     def GetTodayControlLogs(self, request, context):

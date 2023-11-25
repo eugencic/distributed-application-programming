@@ -65,6 +65,14 @@ CREATE TABLE IF NOT EXISTS traffic_logs (
 );
 """
 
+create_data_regulation_table_query = """
+CREATE TABLE IF NOT EXISTS data_regulation (
+    id serial PRIMARY KEY,
+    intersection_id integer,
+    message text
+);
+"""
+
 try:
     conn = psycopg2.connect(
         dbname='traffic-regulation-db',
@@ -229,6 +237,54 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             context.set_code(e)
             context.set_details(str(e))
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message=str(e))
+        return response
+
+    def AddDataRegulation(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
+        requests_counter.labels('add_data_regulation', 'New request to add data.').inc()
+        print("New request to add data.")
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                insert_query = """
+                    INSERT INTO data_regulation (intersection_id, message)
+                    VALUES (%s, %s)
+                    """
+                cursor.execute(insert_query, (request.intersection_id, request.message))
+                conn.commit()
+            success_counter.inc()
+            response = traffic_regulation_pb2.AddDataRegulationResponse()
+            response.message = f"Data regulation added for intersection nr.{request.intersection_id}."
+            db_pool.putconn(conn)
+        except (Exception,) as e:
+            error_counter.inc()
+            response = traffic_regulation_pb2.AddDataRegulationResponse()
+            response.message = f"Error adding data regulation: {str(e)}"
+        return response
+
+    def DeleteDataRegulation(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
+        requests_counter.labels('delete_data_regulation', 'New request to delete data.').inc()
+        print("New request to delete data.")
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                delete_query = """
+                    DELETE FROM data_regulation
+                    WHERE intersection_id = %s
+                    """
+                cursor.execute(delete_query, (request.intersection_id,))
+                conn.commit()
+            success_counter.inc()
+            response = traffic_regulation_pb2.DeleteDataRegulationResponse()
+            response.message = f"Data regulation deleted for intersection nr.{request.intersection_id}."
+            db_pool.putconn(conn)
+        except (Exception,) as e:
+            error_counter.inc()
+            response = traffic_regulation_pb2.DeleteDataRegulationResponse()
+            response.message = f"Error deleting data regulation: {str(e)}"
         return response
 
     def GetTodayControlLogs(self, request, context):

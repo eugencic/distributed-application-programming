@@ -198,7 +198,8 @@ class LoadBalancerCircuitBreaker:
                         message=f"Internal Server Error")
                     return response
             try:
-                if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"] and service_status != 1:
+                # if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"] and service_status != 1:
+                if method in ["Test"] and service_status != 1:
                     print("sgtgill working cache")
                     cache_key = (method, request.intersection_id)
                     cached_data = cache.get(cache_key)
@@ -245,6 +246,10 @@ def forward_request(request, context, method):
     stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
     if method == "ReceiveDataForAnalytics":
         response = stub.ReceiveDataForAnalytics(request)
+    elif method == "AddDataAnalytics":
+        response = stub.AddDataAnalytics(request)
+    elif method == "DeleteDataRegulation":
+        response = stub.DeleteDataAnalytics(request)
     elif method == "GetTodayStatistics":
         response = stub.GetTodayStatistics(request)
     elif method == "GetLastWeekStatistics":
@@ -283,6 +288,14 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
 
     def ReceiveDataForAnalytics(self, request, context):
         response = forward_request(request, context, "ReceiveDataForAnalytics")
+        return response
+
+    def AddDataAnalytics(self, request, context):
+        response = forward_request(request, context, "AddDataAnalytics")
+        return response
+
+    def DeleteDataAnalytics(self, request, context):
+        response = forward_request(request, context, "DeleteDataAnalytics")
         return response
 
     def GetTodayStatistics(self, request, context):

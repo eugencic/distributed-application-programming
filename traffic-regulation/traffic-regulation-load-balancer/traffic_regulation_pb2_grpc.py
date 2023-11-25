@@ -19,6 +19,16 @@ class TrafficRegulationStub(object):
                 request_serializer=traffic__regulation__pb2.TrafficDataForLogs.SerializeToString,
                 response_deserializer=traffic__regulation__pb2.TrafficDataForLogsReceiveResponse.FromString,
                 )
+        self.AddDataRegulation = channel.unary_unary(
+                '/main.TrafficRegulation/AddDataRegulation',
+                request_serializer=traffic__regulation__pb2.AddDataRegulationRequest.SerializeToString,
+                response_deserializer=traffic__regulation__pb2.AddDataRegulationResponse.FromString,
+                )
+        self.DeleteDataRegulation = channel.unary_unary(
+                '/main.TrafficRegulation/DeleteDataRegulation',
+                request_serializer=traffic__regulation__pb2.DeleteDataRegulationRequest.SerializeToString,
+                response_deserializer=traffic__regulation__pb2.DeleteDataRegulationResponse.FromString,
+                )
         self.GetTodayControlLogs = channel.unary_unary(
                 '/main.TrafficRegulation/GetTodayControlLogs',
                 request_serializer=traffic__regulation__pb2.IntersectionRequestForLogs.SerializeToString,
@@ -40,6 +50,18 @@ class TrafficRegulationServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReceiveDataForLogs(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddDataRegulation(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteDataRegulation(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -70,6 +92,16 @@ def add_TrafficRegulationServicer_to_server(servicer, server):
                     servicer.ReceiveDataForLogs,
                     request_deserializer=traffic__regulation__pb2.TrafficDataForLogs.FromString,
                     response_serializer=traffic__regulation__pb2.TrafficDataForLogsReceiveResponse.SerializeToString,
+            ),
+            'AddDataRegulation': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddDataRegulation,
+                    request_deserializer=traffic__regulation__pb2.AddDataRegulationRequest.FromString,
+                    response_serializer=traffic__regulation__pb2.AddDataRegulationResponse.SerializeToString,
+            ),
+            'DeleteDataRegulation': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteDataRegulation,
+                    request_deserializer=traffic__regulation__pb2.DeleteDataRegulationRequest.FromString,
+                    response_serializer=traffic__regulation__pb2.DeleteDataRegulationResponse.SerializeToString,
             ),
             'GetTodayControlLogs': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTodayControlLogs,
@@ -110,6 +142,40 @@ class TrafficRegulation(object):
         return grpc.experimental.unary_unary(request, target, '/main.TrafficRegulation/ReceiveDataForLogs',
             traffic__regulation__pb2.TrafficDataForLogs.SerializeToString,
             traffic__regulation__pb2.TrafficDataForLogsReceiveResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AddDataRegulation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficRegulation/AddDataRegulation',
+            traffic__regulation__pb2.AddDataRegulationRequest.SerializeToString,
+            traffic__regulation__pb2.AddDataRegulationResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteDataRegulation(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.TrafficRegulation/DeleteDataRegulation',
+            traffic__regulation__pb2.DeleteDataRegulationRequest.SerializeToString,
+            traffic__regulation__pb2.DeleteDataRegulationResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

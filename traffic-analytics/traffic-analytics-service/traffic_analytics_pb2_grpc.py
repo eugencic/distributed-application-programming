@@ -19,6 +19,16 @@ class TrafficAnalyticsStub(object):
                 request_serializer=traffic__analytics__pb2.TrafficDataForAnalytics.SerializeToString,
                 response_deserializer=traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.FromString,
                 )
+        self.AddDataAnalytics = channel.unary_unary(
+                '/analytics.TrafficAnalytics/AddDataAnalytics',
+                request_serializer=traffic__analytics__pb2.AddDataAnalyticsRequest.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.AddDataAnalyticsResponse.FromString,
+                )
+        self.DeleteDataAnalytics = channel.unary_unary(
+                '/analytics.TrafficAnalytics/DeleteDataAnalytics',
+                request_serializer=traffic__analytics__pb2.DeleteDataAnalyticsRequest.SerializeToString,
+                response_deserializer=traffic__analytics__pb2.DeleteDataAnalyticsResponse.FromString,
+                )
         self.GetTodayStatistics = channel.unary_unary(
                 '/analytics.TrafficAnalytics/GetTodayStatistics',
                 request_serializer=traffic__analytics__pb2.IntersectionRequestForAnalytics.SerializeToString,
@@ -45,6 +55,18 @@ class TrafficAnalyticsServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReceiveDataForAnalytics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddDataAnalytics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteDataAnalytics(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -81,6 +103,16 @@ def add_TrafficAnalyticsServicer_to_server(servicer, server):
                     servicer.ReceiveDataForAnalytics,
                     request_deserializer=traffic__analytics__pb2.TrafficDataForAnalytics.FromString,
                     response_serializer=traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.SerializeToString,
+            ),
+            'AddDataAnalytics': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddDataAnalytics,
+                    request_deserializer=traffic__analytics__pb2.AddDataAnalyticsRequest.FromString,
+                    response_serializer=traffic__analytics__pb2.AddDataAnalyticsResponse.SerializeToString,
+            ),
+            'DeleteDataAnalytics': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteDataAnalytics,
+                    request_deserializer=traffic__analytics__pb2.DeleteDataAnalyticsRequest.FromString,
+                    response_serializer=traffic__analytics__pb2.DeleteDataAnalyticsResponse.SerializeToString,
             ),
             'GetTodayStatistics': grpc.unary_unary_rpc_method_handler(
                     servicer.GetTodayStatistics,
@@ -126,6 +158,40 @@ class TrafficAnalytics(object):
         return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/ReceiveDataForAnalytics',
             traffic__analytics__pb2.TrafficDataForAnalytics.SerializeToString,
             traffic__analytics__pb2.TrafficDataForAnalyticsReceiveResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def AddDataAnalytics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/AddDataAnalytics',
+            traffic__analytics__pb2.AddDataAnalyticsRequest.SerializeToString,
+            traffic__analytics__pb2.AddDataAnalyticsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteDataAnalytics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/analytics.TrafficAnalytics/DeleteDataAnalytics',
+            traffic__analytics__pb2.DeleteDataAnalyticsRequest.SerializeToString,
+            traffic__analytics__pb2.DeleteDataAnalyticsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

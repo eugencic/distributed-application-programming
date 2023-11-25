@@ -41,6 +41,32 @@ class TrafficRegulationResponse(_message.Message):
     logs: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, intersection_id: _Optional[int] = ..., logs: _Optional[_Iterable[str]] = ...) -> None: ...
 
+class AddDataRegulationRequest(_message.Message):
+    __slots__ = ["intersection_id", "message"]
+    INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    intersection_id: int
+    message: str
+    def __init__(self, intersection_id: _Optional[int] = ..., message: _Optional[str] = ...) -> None: ...
+
+class AddDataRegulationResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...
+
+class DeleteDataRegulationRequest(_message.Message):
+    __slots__ = ["intersection_id"]
+    INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
+    intersection_id: int
+    def __init__(self, intersection_id: _Optional[int] = ...) -> None: ...
+
+class DeleteDataRegulationResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...
+
 class TrafficRegulationServiceStatusRequest(_message.Message):
     __slots__ = []
     def __init__(self) -> None: ...

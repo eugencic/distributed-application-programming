@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS traffic_analytics (
 );
 """
 
+create_data_analytics_table_query = """
+CREATE TABLE IF NOT EXISTS data_regulation (
+    id serial PRIMARY KEY,
+    intersection_id integer,
+    message text
+);
+"""
+
 try:
     conn = psycopg2.connect(
         dbname='traffic-analytics-db',
@@ -186,6 +194,54 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             context.set_code(e.code())
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
+        return response
+
+    def AddDataAnalytics(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
+        requests_counter.labels('add_data_analytics', 'New request to add data.').inc()
+        print("New request to add data.")
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                insert_query = """
+                    INSERT INTO data_analytics (intersection_id, message)
+                    VALUES (%s, %s)
+                    """
+                cursor.execute(insert_query, (request.intersection_id, request.message))
+                conn.commit()
+            success_counter.inc()
+            response = traffic_analytics_pb2.AddDataAnalyticsResponse()
+            response.message = f"Data analytics added for intersection nr.{request.intersection_id}."
+            db_pool.putconn(conn)
+        except (Exception,) as e:
+            error_counter.inc()
+            response = traffic_analytics_pb2.AddDataAnalyticsResponse()
+            response.message = f"Error adding data analytics: {str(e)}"
+        return response
+
+    def DeleteDataAnalytics(self, request, context):
+        self.increment_request_count()
+        self.check_critical_load()
+        requests_counter.labels('delete_data_analytics', 'New request to delete data.').inc()
+        print("New request to delete data.")
+        try:
+            conn = db_pool.getconn()
+            with conn.cursor() as cursor:
+                delete_query = """
+                    DELETE FROM data_analytics
+                    WHERE intersection_id = %s
+                    """
+                cursor.execute(delete_query, (request.intersection_id,))
+                conn.commit()
+            success_counter.inc()
+            response = traffic_analytics_pb2.DeleteDataAnalyticsResponse()
+            response.message = f"Data analytics deleted for intersection nr.{request.intersection_id}."
+            db_pool.putconn(conn)
+        except (Exception,) as e:
+            error_counter.inc()
+            response = traffic_analytics_pb2.DeleteDataAnalyticsResponse()
+            response.message = f"Error deleting data analytics: {str(e)}"
         return response
 
     def GetTodayStatistics(self, request, context):

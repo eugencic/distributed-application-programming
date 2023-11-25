@@ -46,6 +46,32 @@ class TrafficAnalyticsResponse(_message.Message):
     average_incidents: float
     def __init__(self, intersection_id: _Optional[int] = ..., timestamp: _Optional[str] = ..., average_vehicle_count: _Optional[float] = ..., peak_hours: _Optional[str] = ..., average_incidents: _Optional[float] = ...) -> None: ...
 
+class AddDataAnalyticsRequest(_message.Message):
+    __slots__ = ["intersection_id", "message"]
+    INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    intersection_id: int
+    message: str
+    def __init__(self, intersection_id: _Optional[int] = ..., message: _Optional[str] = ...) -> None: ...
+
+class AddDataAnalyticsResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...
+
+class DeleteDataAnalyticsRequest(_message.Message):
+    __slots__ = ["intersection_id"]
+    INTERSECTION_ID_FIELD_NUMBER: _ClassVar[int]
+    intersection_id: int
+    def __init__(self, intersection_id: _Optional[int] = ...) -> None: ...
+
+class DeleteDataAnalyticsResponse(_message.Message):
+    __slots__ = ["message"]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    message: str
+    def __init__(self, message: _Optional[str] = ...) -> None: ...
+
 class TrafficAnalyticsServiceStatusRequest(_message.Message):
     __slots__ = []
     def __init__(self) -> None: ...
