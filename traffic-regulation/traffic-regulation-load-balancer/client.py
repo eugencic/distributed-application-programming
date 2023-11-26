@@ -46,8 +46,21 @@ def get_service_status():
         print(response.message)
 
 
+def add_data():
+    with grpc.insecure_channel('localhost:8000') as channel:
+        stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
+        request = traffic_regulation_pb2.AddDataRegulationRequest(
+            intersection_id=5,
+            message="SampleMessage"
+        )
+        response = stub.AddDataRegulation(request)
+        print(response.message)
+
+
+
 if __name__ == '__main__':
     # receive_data_for_logs()
     # get_today_control_logs(5)
-    get_last_week_control_logs(5)
+    # get_last_week_control_logs(5)
     # get_service_status()
+    add_data()

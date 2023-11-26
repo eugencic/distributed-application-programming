@@ -63,10 +63,19 @@ def get_service_status():
         response = stub.TrafficAnalyticsServiceStatus(request)
         print(response.message)
 
+def del_analyt():
+    with grpc.insecure_channel('localhost:7071') as channel:
+        stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
+        request = traffic_analytics_pb2.DeleteDataAnalyticsRequest(
+            intersection_id=1
+        )
+        response = stub.DeleteDataAnalytics(request)
+        print(response)
 
 if __name__ == '__main__':
-    receive_data_for_analytics()
+    # receive_data_for_analytics()
     # get_today_statistics(5)
     # get_last_week_statistics(5)
     # get_next_week_predictions(5)
     # get_service_status()
+    del_analyt()

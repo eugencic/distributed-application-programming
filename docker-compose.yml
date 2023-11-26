@@ -229,11 +229,29 @@ services:
     networks:
       - mynetwork
 
-  cache-service:
-    container_name: cache-service
-    image: redis:latest
+  coordinator:
+    container_name: coordinator
+    # image: eugencic/coordinator:latest
+    build:
+      context: ./coordinator
     ports:
-      - "6379:6379"
+      - "6061:6061"
+    restart: always
+    depends_on:
+      service_discovery:
+        condition: service_started
+      traffic-analytics-load-balancer:
+        condition: service_started
+      traffic-regulation-load-balancer:
+        condition: service_started
+    networks:
+      - mynetwork
+
+#  cache-service:
+#    container_name: cache-service
+#    image: redis:latest
+#    ports:
+#      - "6379:6379"
 
   prometheus:
     container_name: prometheus

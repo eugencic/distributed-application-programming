@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS traffic_analytics (
 """
 
 create_data_analytics_table_query = """
-CREATE TABLE IF NOT EXISTS data_regulation (
+CREATE TABLE IF NOT EXISTS data_analytics (
     id serial PRIMARY KEY,
     intersection_id integer,
     message text
@@ -89,6 +89,8 @@ try:
     cursor.execute(create_traffic_data_table_query)
     conn.commit()
     cursor.execute(create_traffic_analytics_table_query)
+    conn.commit()
+    cursor.execute(create_data_analytics_table_query)
     conn.commit()
     print("All necessary tables are created!")
     cursor.close()

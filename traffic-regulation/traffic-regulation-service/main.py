@@ -89,6 +89,8 @@ try:
     conn.commit()
     cursor.execute(create_traffic_logs_table_query)
     conn.commit()
+    cursor.execute(create_data_regulation_table_query)
+    conn.commit()
     print("All necessary tables are created!")
     cursor.close()
     conn.close()
