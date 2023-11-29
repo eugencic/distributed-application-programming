@@ -1,7 +1,5 @@
 import grpc
 from concurrent import futures
-import traffic_regulation_pb2
-import traffic_regulation_pb2_grpc
 import psycopg2.pool
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -10,6 +8,9 @@ import requests
 import time
 import os
 from prometheus_client import start_http_server, Counter, Enum
+import traffic_regulation_pb2
+import traffic_regulation_pb2_grpc
+
 
 requests_counter = Counter('t_reg_requests_total', 'Requests', ['endpoint', 'message'])
 timeouts_counter = Counter('t_reg_timeouts_total', 'Timeouts')
@@ -150,7 +151,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        #time.sleep(3)
+        # time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")
@@ -299,11 +300,10 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")
@@ -353,7 +353,6 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
@@ -415,11 +414,10 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
-        # time.sleep(3)
+        time.sleep(3)
         if timeout_event.is_set():
             timeouts_counter.inc()
             print("Request timed out.")

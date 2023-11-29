@@ -1,12 +1,12 @@
 import grpc
-import traffic_analytics_pb2
-import traffic_analytics_pb2_grpc
 from concurrent import futures
 import threading
 from threading import Timer
 import requests
 import time
-from cachetools import TTLCache
+# from cachetools import TTLCache
+import traffic_analytics_pb2
+import traffic_analytics_pb2_grpc
 
 service_discovery_endpoint = "http://service-discovery:9090"
 load_balancer_name = "traffic-analytics-load-balancer"
@@ -61,35 +61,22 @@ def get_next_replica():
         return current_replica_index
 
 
-cache = TTLCache(maxsize=1000, ttl=60)
+# cache = TTLCache(maxsize=1000, ttl=60)
 
 
 class LoadBalancerCircuitBreaker:
     def __init__(self, error_threshold, reroute_threshold, time_window, timeout):
         self.error_threshold = error_threshold
+        self.reroute_threshold = reroute_threshold
         self.time_window = time_window
         self.timeout = timeout
         self.replica_statuses = {}
         self.replica_errors = {}
+        self.replica_reroutes = {}
         self.health_check_locks = {}
         self.timer = Timer(self.timeout, self.cleanup_all_errors)
-        self.timer2 = Timer(self.timeout, self.cleanup_all_reroutes)
-        self.replica_reroutes = {}
-        self.reroute_threshold = reroute_threshold
-        self.reroute_time_window = time_window
 
     def start_timer(self):
-        self.timer.start()
-
-    def start_timer2(self):
-        self.timer2.start()
-
-    def cleanup_all_reroutes(self):
-        for replica_number in self.replica_reroutes:
-            now = time.time()
-            self.replica_reroutes[replica_number] = [error for error in self.replica_reroutes[replica_number] if
-                                                     now - error <= self.reroute_time_window]
-        self.timer = Timer(self.timeout, self.cleanup_all_reroutes)
         self.timer.start()
 
     def cleanup_all_errors(self):
@@ -105,11 +92,6 @@ class LoadBalancerCircuitBreaker:
         self.replica_errors[replica_number] = [error for error in self.replica_errors[replica_number] if
                                                now - error <= self.time_window]
 
-    def cleanup_old_reroutes(self, replica_number):
-        now = time.time()
-        self.replica_reroutes[replica_number] = [error for error in self.replica_reroutes[replica_number] if
-                                                 now - error <= self.reroute_time_window]
-
     def is_replica_open(self, replica_number):
         replica_state = self.replica_statuses.get(replica_number, 'closed') == 'open'
         return replica_state
@@ -122,6 +104,9 @@ class LoadBalancerCircuitBreaker:
                 return next_replica_index
         return None
 
+    def is_health_check_in_progress(self, replica_number):
+        return self.health_check_locks.get(replica_number, threading.Lock()).locked()
+
     def acquire_health_check_lock(self, replica_number):
         if replica_number not in self.health_check_locks:
             self.health_check_locks[replica_number] = threading.Lock()
@@ -129,9 +114,6 @@ class LoadBalancerCircuitBreaker:
 
     def release_health_check_lock(self, replica_number):
         self.health_check_locks[replica_number].release()
-
-    def is_health_check_in_progress(self, replica_number):
-        return self.health_check_locks.get(replica_number, threading.Lock()).locked()
 
     def health_check_thread(self, replica_number):
         try:
@@ -152,7 +134,8 @@ class LoadBalancerCircuitBreaker:
             errors = 0
             for _ in range(self.error_threshold - 1):
                 try:
-                    stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
+                    stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest(),
+                                                       timeout=2)
                     print(f"Health check request succeeded for replica nr.{replica_number}")
                 except grpc.RpcError as e:
                     print(f"Health check request failed for replica nr.{replica_number}")
@@ -199,18 +182,17 @@ class LoadBalancerCircuitBreaker:
                     return response
             try:
                 # if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"] and service_status != 1:
-                if method in ["Test"] and service_status != 1:
-                    print("sgtgill working cache")
-                    cache_key = (method, request.intersection_id)
-                    cached_data = cache.get(cache_key)
-                    if cached_data is not None:
-                        print("Cache is present...")
-                        return cached_data
+                # if method in ["Test"] and service_status != 1:
+                #     cache_key = (method, request.intersection_id)
+                #     cached_data = cache.get(cache_key)
+                #     if cached_data is not None:
+                #         print("Cache is present...")
+                #         return cached_data
                 response = func(request, context, method)
                 print(f"Successful request at replica nr.{current_replica_index + 1}.")
-                if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"]:
-                    print("Storing cache...")
-                    cache[cache_key] = response
+                # if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"]:
+                #     print("Storing cache...")
+                #     cache[cache_key] = response
                 return response
             except grpc.RpcError as e:
                 replica_number = current_replica_index + 1
@@ -238,7 +220,7 @@ def forward_request(request, context, method):
     global current_replica_index
     global service_status
     if service_status == 1:
-        print("Service status is 1. Returning Internal Server Error response.")
+        print("Service is not working.")
         response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
             message=f"Internal Server Error")
         return response
@@ -247,15 +229,17 @@ def forward_request(request, context, method):
     if method == "ReceiveDataForAnalytics":
         response = stub.ReceiveDataForAnalytics(request)
     elif method == "AddDataAnalytics":
-        response = stub.AddDataAnalytics(request)
-    elif method == "DeleteDataRegulation":
-        response = stub.DeleteDataAnalytics(request)
+        response = stub.AddDataAnalytics(request, timeout=2)
+    elif method == "DeleteDataAnalytics":
+        response = stub.DeleteDataAnalytics(request, timeout=2)
     elif method == "GetTodayStatistics":
-        response = stub.GetTodayStatistics(request)
+        response = stub.GetTodayStatistics(request, timeout=2)
     elif method == "GetLastWeekStatistics":
-        response = stub.GetLastWeekStatistics(request)
+        response = stub.GetLastWeekStatistics(request, timeout=2)
     elif method == "GetNextWeekPredictions":
-        response = stub.GetNextWeekPredictions(request)
+        response = stub.GetNextWeekPredictions(request, timeout=2)
+    # elif method == "TrafficAnalyticsServiceStatus":
+    #     response = stub.TrafficAnalyticsServiceStatus(request)
     else:
         context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
         context.set_details(f"Invalid method: {method}")
@@ -329,7 +313,7 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
 
 def start():
     register_load_balancer(load_balancer_name, load_balancer_name, load_balancer_port)
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=20))
     traffic_analytics_pb2_grpc.add_TrafficAnalyticsServicer_to_server(LoadBalancerServicer(), server)
     server.add_insecure_port(f"0.0.0.0:{load_balancer_port}")
     server.start()

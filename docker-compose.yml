@@ -195,7 +195,9 @@ services:
 
   traffic-regulation-load-balancer:
     container_name: traffic-regulation-load-balancer
-    image: eugencic/traffic-regulation-load-balancer:latest
+    # image: eugencic/traffic-regulation-load-balancer:latest
+    build:
+      context: ./traffic-regulation/traffic-regulation-load-balancer
     ports:
       - "8000:8000"
     restart: always

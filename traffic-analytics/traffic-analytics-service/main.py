@@ -1,7 +1,5 @@
 import grpc
 from concurrent import futures
-import traffic_analytics_pb2
-import traffic_analytics_pb2_grpc
 import psycopg2.pool
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
@@ -10,6 +8,9 @@ import requests
 import time
 import os
 from prometheus_client import start_http_server, Counter, Enum
+import traffic_analytics_pb2
+import traffic_analytics_pb2_grpc
+
 
 requests_counter = Counter('t_an_requests_total', 'Requests', ['endpoint', 'message'])
 timeouts_counter = Counter('t_an_timeouts_total', 'Timeouts')
@@ -193,7 +194,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except grpc.RpcError as e:
             error_counter.inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
         return response
@@ -345,7 +346,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except grpc.RpcError as e:
             error_counter.inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
             return response
@@ -360,7 +361,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
@@ -457,7 +457,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except grpc.RpcError as e:
             error_counter.inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
             return response
@@ -472,7 +472,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()
@@ -571,7 +570,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except grpc.RpcError as e:
             error_counter.inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
             return response
@@ -584,7 +583,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
 
         def timeout_handler():
             timeout_event.set()
-            # print("Timer is set.")
 
         timer_thread = threading.Timer(timeout_seconds, timeout_handler)
         timer_thread.start()

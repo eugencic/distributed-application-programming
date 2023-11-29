@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package main;
+package regulation;
 
 service TrafficRegulation {
   rpc ReceiveDataForLogs (TrafficDataForLogs) returns (TrafficDataForLogsReceiveResponse);
