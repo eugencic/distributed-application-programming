@@ -250,11 +250,22 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
-                insert_query = """
-                    INSERT INTO data_regulation (intersection_id, message)
-                    VALUES (%s, %s)
+                select_query = "SELECT * FROM data_regulation WHERE intersection_id = %s"
+                cursor.execute(select_query, (request.intersection_id,))
+                existing_row = cursor.fetchone()
+                if existing_row:
+                    update_query = """
+                        UPDATE data_regulation
+                        SET message = %s
+                        WHERE intersection_id = %s
                     """
-                cursor.execute(insert_query, (request.intersection_id, request.message))
+                    cursor.execute(update_query, (request.message, request.intersection_id))
+                else:
+                    insert_query = """
+                        INSERT INTO data_regulation (intersection_id, message)
+                        VALUES (%s, %s)
+                    """
+                    cursor.execute(insert_query, (request.intersection_id, request.message))
                 conn.commit()
             success_counter.inc()
             response = traffic_regulation_pb2.AddDataRegulationResponse()

@@ -249,11 +249,23 @@ services:
     networks:
       - mynetwork
 
-#  cache-service:
-#    container_name: cache-service
-#    image: redis:latest
-#    ports:
-#      - "6379:6379"
+  cache-service-1:
+    container_name: cache-service-1
+    image: redis:latest
+    ports:
+      - "6371:6379"
+
+  cache-service-2:
+    container_name: cache-service-2
+    image: redis:latest
+    ports:
+      - "6372:6379"
+
+  cache-service-3:
+    container_name: cache-service-3
+    image: redis:latest
+    ports:
+      - "6373:6379"
 
   prometheus:
     container_name: prometheus
