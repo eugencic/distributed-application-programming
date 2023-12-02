@@ -10,6 +10,8 @@ import (
 	tr "gateway/gen/traffic_regulation"
 	"github.com/golang/glog"
 	muxRuntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"io"
 	"log"
@@ -39,8 +41,20 @@ var logger = log.New(os.Stdout, "", log.LstdFlags)
 
 var startTime time.Time
 
+var (
+	requestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gateway_requests_total",
+			Help: "Total number of requests handled by the gateway.",
+		},
+		[]string{"method", "status"},
+	)
+)
+
 func init() {
 	startTime = time.Now()
+
+	prometheus.MustRegister(requestsTotal)
 }
 
 func formatMemoryInMB(bytes uint64) string {
@@ -49,6 +63,12 @@ func formatMemoryInMB(bytes uint64) string {
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
+	status := 200
+	if responseStatus, ok := w.(interface{ Status() int }); ok {
+		status = responseStatus.Status()
+	}
+	requestsTotal.WithLabelValues(r.Method, fmt.Sprintf("%d", status)).Inc()
+
 	uptime := time.Since(startTime).Minutes()
 
 	dependentServices := []string{
@@ -80,12 +100,24 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func serviceDiscoveryStatusHandler(w http.ResponseWriter, r *http.Request) {
+	status := 200
+	if responseStatus, ok := w.(interface{ Status() int }); ok {
+		status = responseStatus.Status()
+	}
+	requestsTotal.WithLabelValues(r.Method, fmt.Sprintf("%d", status)).Inc()
+
 	resp, err := http.Get(serviceDiscoveryEndpoint + "/get_service_discovery_status")
 	if err != nil {
 		http.Error(w, "Service discovery is not reachable", http.StatusServiceUnavailable)
 		return
 	}
-	defer resp.Body.Close()
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	for k, v := range resp.Header {
 		w.Header()[k] = v
@@ -157,6 +189,12 @@ func logRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Printf("Request: %s %s", r.Method, r.URL.Path)
 
+		statusCode := 200
+		if responseStatus, ok := w.(interface{ Status() int }); ok {
+			statusCode = responseStatus.Status()
+		}
+		requestsTotal.WithLabelValues(r.Method, fmt.Sprintf("%d", statusCode)).Inc()
+
 		next.ServeHTTP(w, r)
 
 		if status, ok := w.(interface {
@@ -212,6 +250,8 @@ func run() error {
 	mux.HandleFunc("/get_service_discovery_status", serviceDiscoveryStatusHandler)
 
 	mux.HandleFunc("/get_gateway_status", statusHandler)
+
+	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.Handle("/", logRequestMiddleware(grpcMux))
 

@@ -11,7 +11,7 @@ COPY gen/ /app/gen/
 
 COPY proto/ /app/proto/
 
-COPY req/ /app/req/
+# COPY req/ /app/req/
 
 COPY tools/ /app/tools/
 
