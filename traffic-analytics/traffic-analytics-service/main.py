@@ -190,7 +190,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except (Exception,) as e:
             error_counter.inc()
             context.set_code(grpc.StatusCode.INTERNAL)
-            print(f"Error: {str(e)}")
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse()
             response.message = f"Error saving traffic data: {str(e)}"
         except grpc.RpcError as e:
@@ -321,13 +320,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 average_vehicle_count = round(total_vehicle_count / len(results), 3) if len(results) > 0 else 0.0
                 average_incidents = round(total_incidents / len(results), 3) if len(results) > 0 else 0.0
             with conn.cursor() as cursor:
-                # time.sleep(3)
-                if timeout_event.is_set():
-                    timeouts_counter.inc()
-                    print("Request timed out")
-                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out")
                 query = """
                     INSERT INTO traffic_analytics (
                     intersection_id, 
@@ -377,7 +369,7 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
         except grpc.RpcError as e:
             error_counter.inc()
             print(f"RPC error: {str(e)}")
-            context.set_code(e.code())
+            context.set_code(e)
             context.set_details(str(e))
             response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message=str(e))
             return response
@@ -433,13 +425,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 average_vehicle_count = round(total_vehicle_count / len(results), 3) if len(results) > 0 else 0.0
                 average_incidents = round(total_incidents / len(results), 3) if len(results) > 0 else 0.0
             with conn.cursor() as cursor:
-                # time.sleep(3)
-                if timeout_event.is_set():
-                    timeouts_counter.inc()
-                    print("Request timed out")
-                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out")
                 query = """
                     INSERT INTO traffic_analytics (
                         intersection_id, 
@@ -547,13 +532,6 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 predicted_average_vehicle_count = average_vehicle_count + 10
                 predicted_average_incidents = average_incidents + 10
             with conn.cursor() as cursor:
-                # time.sleep(3)
-                if timeout_event.is_set():
-                    timeouts_counter.inc()
-                    print("Request timed out")
-                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out")
-                    return traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(message="Request timed out")
                 query = """
                     INSERT INTO traffic_analytics (
                         intersection_id, 
@@ -641,6 +619,8 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
             )
             context.set_code(grpc.StatusCode.OK)
             context.set_details(f"{service_name}:{service_port} is healthy")
+            database_state.state('connected')
+            success_counter.inc()
             response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(message=f"{service_name}:"
                                                                                            f"{service_port}: healthy")
             conn.close()

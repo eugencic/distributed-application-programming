@@ -250,14 +250,14 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:6060/today_statistics",
+							"raw": "http://localhost:6060/today_control_logs",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "6060",
 							"path": [
-								"today_statistics"
+								"today_control_logs"
 							]
 						}
 					},
@@ -278,14 +278,47 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:6060/last_week_statistics",
+							"raw": "http://localhost:6060/last_week_control_logs",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "6060",
 							"path": [
-								"last_week_statistics"
+								"last_week_control_logs"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "coordinator",
+			"item": [
+				{
+					"name": "add_data",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"id\": 1,\r\n  \"message\": \"Sample message\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:6061/add_data",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "6061",
+							"path": [
+								"add_data"
 							]
 						}
 					},

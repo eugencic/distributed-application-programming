@@ -11,7 +11,6 @@ from prometheus_client import start_http_server, Counter, Enum
 import traffic_regulation_pb2
 import traffic_regulation_pb2_grpc
 
-
 requests_counter = Counter('t_reg_requests_total', 'Requests', ['endpoint', 'message'])
 timeouts_counter = Counter('t_reg_timeouts_total', 'Timeouts')
 success_counter = Counter('t_reg_successful_requests_total', 'Successful Requests')
@@ -182,13 +181,6 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 ))
                 conn.commit()
             with conn.cursor() as cursor:
-                # time.sleep(3)
-                if timeout_event.is_set():
-                    timeouts_counter.inc()
-                    print("Request timed out")
-                    context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
-                    context.set_details("Request timed out")
-                    return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(message="Request timed out")
                 cursor.execute(
                     """
                     SELECT log_messages FROM traffic_logs
@@ -232,6 +224,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except (Exception,) as e:
             error_counter.inc()
+            context.set_code(grpc.StatusCode.INTERNAL)
             response = traffic_regulation_pb2.TrafficDataForLogsReceiveResponse()
             response.message = f"Error saving traffic data: {str(e)}"
         except grpc.RpcError as e:
@@ -273,8 +266,16 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except (Exception,) as e:
             error_counter.inc()
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Error adding data regulation: {str(e)}")
             response = traffic_regulation_pb2.AddDataRegulationResponse()
             response.message = f"Error adding data regulation: {str(e)}"
+        except grpc.RpcError as e:
+            error_counter.inc()
+            print(f"RPC error: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            response = traffic_regulation_pb2.AddDataRegulationResponse(message=str(e))
         return response
 
     def DeleteDataRegulation(self, request, context):
@@ -297,8 +298,16 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except (Exception,) as e:
             error_counter.inc()
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Error deleting data regulation: {str(e)}")
             response = traffic_regulation_pb2.DeleteDataRegulationResponse()
             response.message = f"Error deleting data regulation: {str(e)}"
+        except grpc.RpcError as e:
+            error_counter.inc()
+            print(f"RPC error: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            response = traffic_regulation_pb2.DeleteDataRegulationResponse(message=str(e))
         return response
 
     def GetTodayControlLogs(self, request, context):
@@ -320,7 +329,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             print("Request timed out")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out")
-            return traffic_regulation_pb2.TrafficRegulationResponse(logs=["Request timed out."])
+            return traffic_regulation_pb2.TrafficRegulationResponse(logs=["Request timed out"])
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -341,9 +350,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except (Exception,) as e:
             error_counter.inc()
-            print(f"Error: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
+            print(f"Error: {str(e)}")
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
         except grpc.RpcError as e:
             error_counter.inc()
@@ -372,7 +380,7 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             print("Request timed out")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out")
-            return traffic_regulation_pb2.TrafficRegulationResponse(logs=["Request timed out."])
+            return traffic_regulation_pb2.TrafficRegulationResponse(logs=["Request timed out"])
         try:
             conn = db_pool.getconn()
             with conn.cursor() as cursor:
@@ -403,9 +411,8 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             db_pool.putconn(conn)
         except (Exception,) as e:
             error_counter.inc()
-            print(f"Error: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
+            print(f"Error: {str(e)}")
             response = traffic_regulation_pb2.TrafficRegulationResponse(logs=["Error: " + str(e)])
         except grpc.RpcError as e:
             error_counter.inc()
@@ -418,8 +425,11 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
     def TrafficRegulationServiceStatus(self, request, context):
         self.increment_request_count()
         self.check_critical_load()
+        print("New request for service status")
         timeout_seconds = 2
         timeout_event = threading.Event()
+        service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
+        service_port = int(os.environ.get("SERVICE_PORT", 8081))
 
         def timeout_handler():
             timeout_event.set()
@@ -432,10 +442,9 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
             print("Request timed out")
             context.set_code(grpc.StatusCode.DEADLINE_EXCEEDED)
             context.set_details("Request timed out")
-            return traffic_regulation_pb2.TrafficRegulationResponse(
-                logs=["Request timed out"])
+            return traffic_regulation_pb2.TrafficDataForLogsReceiveResponse(
+                message="Request timed out")
         try:
-            service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
             conn = psycopg2.connect(
                 dbname='traffic-regulation-db',
                 user='postgres',
@@ -445,20 +454,28 @@ class TrafficRegulationServicer(traffic_regulation_pb2_grpc.TrafficRegulationSer
                 # port='5434'
             )
             context.set_code(grpc.StatusCode.OK)
-            context.set_details(f"{service_name} is healthy")
+            context.set_details(f"{service_name}:{service_port} is healthy")
             database_state.state('connected')
             success_counter.inc()
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}: healthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}:"
+                                                                                             f"{service_port}: healthy")
             conn.close()
             return response
         except (Exception,) as e:
-            database_state.state('not connected')
             error_counter.inc()
-            service_name = os.environ.get("SERVICE_NAME", "traffic-regulation-service-1")
+            database_state.state('not connected')
             context.set_code(grpc.StatusCode.OK)
-            context.set_details(f"{service_name} is unhealthy")
-            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(
-                message=f"{service_name}: unhealthy")
+            context.set_details(f"{service_name}:{service_port} is unhealthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}:"
+                                                                                             f"{service_port}: unhealthy")
+            return response
+        except grpc.RpcError as e:
+            error_counter.inc()
+            database_state.state('not connected')
+            context.set_code(grpc.StatusCode.OK)
+            context.set_details(f"{service_name}:{service_port} is unhealthy")
+            response = traffic_regulation_pb2.TrafficRegulationServiceStatusResponse(message=f"{service_name}:"
+                                                                                             f"{service_port}: unhealthy")
             return response
 
 

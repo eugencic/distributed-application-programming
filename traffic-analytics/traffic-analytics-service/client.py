@@ -38,11 +38,11 @@ def get_last_week_statistics(intersection_id):
         response = stub.GetLastWeekStatistics(request)
         print("Last week's statistics: ")
         print(response)
-        # print("Intersection id:", response.intersection_id)
-        # print("Timestamp:", response.timestamp)
-        # print("Average vehicle count:", response.average_vehicle_count)
-        # print("Peak hours:", response.peak_hours)
-        # print("Incidents:", response.average_incidents)
+        print("Intersection id:", response.intersection_id)
+        print("Timestamp:", response.timestamp)
+        print("Average vehicle count:", response.average_vehicle_count)
+        print("Peak hours:", response.peak_hours)
+        print("Incidents:", response.average_incidents)
 
 
 def get_next_week_predictions(intersection_id):
@@ -52,11 +52,11 @@ def get_next_week_predictions(intersection_id):
         response = stub.GetNextWeekPredictions(request)
         print("Next week's predictions: ")
         print(response)
-        # print("Intersection id:", response.intersection_id)
-        # print("Timestamp:", response.timestamp)
-        # print("Average vehicle count:", response.average_vehicle_count)
-        # print("Peak hours:", response.peak_hours)
-        # print("Incidents:", response.average_incidents)
+        print("Intersection id:", response.intersection_id)
+        print("Timestamp:", response.timestamp)
+        print("Average vehicle count:", response.average_vehicle_count)
+        print("Peak hours:", response.peak_hours)
+        print("Incidents:", response.average_incidents)
 
 
 def get_service_status():

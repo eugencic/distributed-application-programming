@@ -118,26 +118,19 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     }
     ```
 
-### Application suitability
+  - Send data for saga transaction:
 
-Here is why this application is relevant for microservices and why distributed systems are necessary:
-
-- **Complexity and scalability**: the application involves components like traffic regulation and data analysis. As the infrastructure grows, the system becomes more complex. Microservices are well-suited for handling such complexity by breaking it down into smaller, manageable components, which can be individually scaled to meet varying demands. **Facebook**, for instance, manages a complex system with features like the news feed, messaging, and user profiles through microservices.
-- **Independent development**: different aspects of the application, such as regulation and analytics, can be developed and updated independently by separate teams. This allows faster development cycles. For example, the team working on data analysis can add new functionallities without affecting the traffic regulation service. Companies like **Netflix**, with its streaming platform, build and deploy microservices independently, enabling rapid feature development.
-- **Fault Isolation**: if one component fails, it doesn't necessarily bring down the entire system. For example, the traffic regulation service would continue to work, even if the analytics service has problems. **Facebook**'s Messenger service is a great example. Even if the Messenger service experiences issues, the main Facebook platform can continue to operate.
-- **Technology diversity**: microservices provide the flexibility to select the most suitable technology stack or database for each individual component of the application, acknowledging that different parts of the system may have distinct requirements. **Airbnb** utilizes multiple programming languages and frameworks across its microservices to optimize performance and development efficiency.
-- **Easier maintenance**: managing maintenance tasks becomes more convenient when focusing on individual services. This allows making updates, or troubleshooting in a single service without causing disruptions to the entire application.
+    ```
+    POST http://localhost:6061/add_data
+    {
+      "id": 1,
+      "message": "Sample message"
+    }
+    ```
 
 ### Technology stack and communication patterns:
 
 - Gateway, service discovery: `Go`
-- Traffic analytics and regulation services, load balancers: `Python`
-- Cache: `Redis`
+- Traffic analytics and regulation services, load balancers, coordinator: `Python`
 - Databases: `PostgreSQL`
-- Communication patterns: `RPC`, `REST`
-
-### Deployment and scaling:
-
-To ensure modularity and isolation, each microservice in the application is deployed within its own `Docker` container. For this purpose, individual Dockerfiles are created for each microservice, containing all the necessary instructions for building the corresponding container image.
-
-To streamline the orchestration of these containers and facilitate the management of the entire application, `Docker Compose` is employed. Docker Compose simplifies the deployment process by creating and configuring containers, as well as establishing the necessary network connections between them.
+- Communication patterns: `REST`, `RPC`

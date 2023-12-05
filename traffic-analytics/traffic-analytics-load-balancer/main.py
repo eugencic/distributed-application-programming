@@ -250,7 +250,7 @@ def collect_status_from_replicas():
         try:
             response = stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
             responses.append(response.message)
-        except (Exception, ) as e:
+        except (Exception,) as e:
             message = f"{replica_address}: unhealthy"
             responses.append(message)
     return responses
