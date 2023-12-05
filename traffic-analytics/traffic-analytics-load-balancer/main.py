@@ -32,7 +32,7 @@ def register_load_balancer(service_name, service_host, service_port):
             headers=headers,
         )
         if response.status_code == 201:
-            print(f"Registered {service_name} with service discovery.")
+            print(f"Registered {service_name} with service discovery")
         else:
             print(f"Failed to register {service_name} with service discovery: {response.status_code}")
     except Exception as e:
@@ -142,13 +142,13 @@ class LoadBalancerCircuitBreaker:
                     errors += 1
                     self.replica_errors[replica_number].append(time.time())
             if len(self.replica_errors[replica_number]) >= self.error_threshold:
-                print(f"Replica nr.{replica_number} has reached the threshold.")
-                print(f"Service at replica nr.{replica_number} is problematic. The circuit breaker is open.")
+                print(f"Replica nr.{replica_number} has reached the threshold")
+                print(f"Service at replica nr.{replica_number} is problematic. The circuit breaker is open")
                 self.cleanup_old_errors(replica_number)
                 self.replica_statuses[replica_number] = 'open'
             else:
                 print(f"At least one health check request passed for replica nr.{replica_number}")
-                print(f"Service at replica nr.{replica_number} is healthy. The circuit breaker is closed.")
+                print(f"Service at replica nr.{replica_number} is healthy. The circuit breaker is closed")
                 self.replica_statuses[replica_number] = 'closed'
         except Exception as e:
             print(f"Error during health check for replica nr.{current_replica_address}: {str(e)}")
@@ -163,7 +163,7 @@ class LoadBalancerCircuitBreaker:
                 return response
             current_replica_index = get_next_replica()
             replica_number = current_replica_index + 1
-            print(f"Checking circuit breaker for replica nr.{replica_number}")
+            # print(f"Checking circuit breaker for replica nr.{replica_number}")
             if self.is_replica_open(replica_number):
                 print(f"Circuit breaker is open on replica nr.{replica_number}. Redirecting the request...")
                 if replica_number not in self.replica_reroutes:
@@ -173,7 +173,7 @@ class LoadBalancerCircuitBreaker:
                 if next_closed_replica_index is not None:
                     current_replica_index = next_closed_replica_index
                 else:
-                    print("All replicas are open.")
+                    print("All replicas are open")
                     service_status = 1
                     context.set_code(grpc.StatusCode.INTERNAL)
                     context.set_details(f"Internal Server Error")
@@ -182,14 +182,13 @@ class LoadBalancerCircuitBreaker:
                     return response
             try:
                 # if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"] and service_status != 1:
-                # if method in ["Test"] and service_status != 1:
                 #     cache_key = (method, request.intersection_id)
                 #     cached_data = cache.get(cache_key)
                 #     if cached_data is not None:
                 #         print("Cache is present...")
                 #         return cached_data
                 response = func(request, context, method)
-                print(f"Successful request at replica nr.{current_replica_index + 1}.")
+                print(f"Successful request at replica nr.{current_replica_index + 1}")
                 # if method in ["GetLastWeekStatistics", "GetNextWeekPredictions"]:
                 #     print("Storing cache...")
                 #     cache[cache_key] = response
@@ -199,7 +198,7 @@ class LoadBalancerCircuitBreaker:
                 if replica_number not in self.replica_errors:
                     self.replica_errors[replica_number] = []
                 self.replica_errors[replica_number].append(time.time())
-                print(f"Unsuccessful request at replica nr.{replica_number}.")
+                print(f"Unsuccessful request at replica nr.{replica_number}")
                 self.replica_statuses[replica_number] = 'open'
                 if not self.is_health_check_in_progress(replica_number):
                     threading.Thread(target=self.health_check_thread, args=(replica_number,)).start()
@@ -219,11 +218,6 @@ circuit_breaker.start_timer()
 def forward_request(request, context, method):
     global current_replica_index
     global service_status
-    if service_status == 1:
-        print("Service is not working.")
-        response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
-            message=f"Internal Server Error")
-        return response
     channel = grpc.insecure_channel(replica_addresses[current_replica_index])
     stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
     if method == "ReceiveDataForAnalytics":
@@ -238,8 +232,8 @@ def forward_request(request, context, method):
         response = stub.GetLastWeekStatistics(request, timeout=2)
     elif method == "GetNextWeekPredictions":
         response = stub.GetNextWeekPredictions(request, timeout=2)
-    # elif method == "TrafficAnalyticsServiceStatus":
-    #     response = stub.TrafficAnalyticsServiceStatus(request)
+    elif method == "TrafficAnalyticsServiceStatus":
+        response = stub.TrafficAnalyticsServiceStatus(request, timeout=4)
     else:
         context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
         context.set_details(f"Invalid method: {method}")
@@ -256,8 +250,9 @@ def collect_status_from_replicas():
         try:
             response = stub.TrafficAnalyticsServiceStatus(traffic_analytics_pb2.TrafficAnalyticsServiceStatusRequest())
             responses.append(response.message)
-        except Exception as e:
-            print(f"Error getting status from replica {replica_address}: {str(e)}")
+        except (Exception, ) as e:
+            message = f"{replica_address}: unhealthy"
+            responses.append(message)
     return responses
 
 
@@ -271,38 +266,88 @@ class LoadBalancerServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServicer):
         pass
 
     def ReceiveDataForAnalytics(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "ReceiveDataForAnalytics")
         return response
 
     def AddDataAnalytics(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "AddDataAnalytics")
         return response
 
     def DeleteDataAnalytics(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "DeleteDataAnalytics")
         return response
 
     def GetTodayStatistics(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "GetTodayStatistics")
         return response
 
     def GetLastWeekStatistics(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "GetLastWeekStatistics")
         return response
 
     def GetNextWeekPredictions(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
         response = forward_request(request, context, "GetNextWeekPredictions")
         return response
 
     def TrafficAnalyticsServiceStatus(self, request, context):
+        if service_status == 1:
+            print("Service is not working")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Internal Server Error")
+            response = traffic_analytics_pb2.TrafficDataForAnalyticsReceiveResponse(
+                message=f"Internal Server Error")
+            return response
+        print("Request for service status")
         responses = collect_status_from_replicas()
         merged_response = merge_status_responses(responses)
+        print(merged_response)
         unhealthy_service = "unhealthy"
         if unhealthy_service in str(merged_response):
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(f"One or more services experience troubles. Statuses: {str(merged_response)}")
+            context.set_code(grpc.StatusCode.OK)
             response = traffic_analytics_pb2.TrafficAnalyticsServiceStatusResponse(
-                message=f"Statuses: {str(merged_response)}")
+                message=f"One or more services experience troubles. Statuses: {str(merged_response)}")
             return response
         else:
             context.set_code(grpc.StatusCode.OK)

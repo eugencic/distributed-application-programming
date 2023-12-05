@@ -35,12 +35,13 @@ def get_last_week_statistics(intersection_id):
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
         request = traffic_analytics_pb2.IntersectionRequestForAnalytics(intersection_id=intersection_id)
         response = stub.GetLastWeekStatistics(request)
-        print("Last week's statistics: ")
-        print("Intersection id:", response.intersection_id)
-        print("Timestamp:", response.timestamp)
-        print("Average vehicle count:", response.average_vehicle_count)
-        print("Peak hours:", response.peak_hours)
-        print("Incidents:", response.average_incidents)
+        print(response)
+        # print("Last week's statistics: ")
+        # print("Intersection id:", response.intersection_id)
+        # print("Timestamp:", response.timestamp)
+        # print("Average vehicle count:", response.average_vehicle_count)
+        # print("Peak hours:", response.peak_hours)
+        # print("Incidents:", response.average_incidents)
 
 
 def get_next_week_predictions(intersection_id):
@@ -63,6 +64,7 @@ def get_service_status():
         response = stub.TrafficAnalyticsServiceStatus(request)
         print(response.message)
 
+
 def del_analyt():
     with grpc.insecure_channel('localhost:7071') as channel:
         stub = traffic_analytics_pb2_grpc.TrafficAnalyticsStub(channel)
@@ -72,10 +74,11 @@ def del_analyt():
         response = stub.DeleteDataAnalytics(request)
         print(response)
 
+
 if __name__ == '__main__':
     # receive_data_for_analytics()
     # get_today_statistics(5)
-    # get_last_week_statistics(5)
+    get_last_week_statistics(5)
     # get_next_week_predictions(5)
     # get_service_status()
-    del_analyt()
+    # del_analyt()

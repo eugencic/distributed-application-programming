@@ -49,5 +49,5 @@ def get_service_status():
 if __name__ == '__main__':
     # receive_data_for_logs()
     # get_today_control_logs(5)
-    # get_last_week_control_logs(5)
-    get_service_status()
+    get_last_week_control_logs(5)
+    # get_service_status()
