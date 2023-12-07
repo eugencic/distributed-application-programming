@@ -231,7 +231,7 @@ def forward_request(request, context, method):
     elif method == "GetLastWeekControlLogs":
         response = stub.GetLastWeekControlLogs(request, timeout=2)
     elif method == "TrafficRegulationServiceStatus":
-        response = stub.TrafficRegulationServiceStatus(request, timeout=4)
+        response = stub.TrafficRegulationServiceStatus(request, timeout=2)
     else:
         context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
         context.set_details(f"Invalid method: {method}")
@@ -246,7 +246,8 @@ def collect_status_from_replicas():
         channel = grpc.insecure_channel(replica_address)
         stub = traffic_regulation_pb2_grpc.TrafficRegulationStub(channel)
         try:
-            response = stub.TrafficRegulationServiceStatus(traffic_regulation_pb2.TrafficRegulationServiceStatusRequest())
+            response = stub.TrafficRegulationServiceStatus(traffic_regulation_pb2.TrafficRegulationServiceStatusRequest(),
+                                                           timeout=2)
             responses.append(response.message)
         except (Exception,) as e:
             message = f"{replica_address}: unhealthy"

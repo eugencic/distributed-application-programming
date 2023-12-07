@@ -43,9 +43,9 @@ services:
 
   traffic-analytics-service-1:
     container_name: traffic-analytics-service-1
-    # image: eugencic/traffic-analytics-service:latest
-    build:
-      context: ./traffic-analytics/traffic-analytics-service
+    image: eugencic/traffic-analytics-service:latest
+#    build:
+#      context: ./traffic-analytics/traffic-analytics-service
     environment:
       - SERVICE_NAME=traffic-analytics-service-1
       - SERVICE_PORT=7071
@@ -65,9 +65,9 @@ services:
 
   traffic-analytics-service-2:
     container_name: traffic-analytics-service-2
-    # image: eugencic/traffic-analytics-service:latest
-    build:
-      context: ./traffic-analytics/traffic-analytics-service
+    image: eugencic/traffic-analytics-service:latest
+#    build:
+#      context: ./traffic-analytics/traffic-analytics-service
     environment:
       - SERVICE_NAME=traffic-analytics-service-2
       - SERVICE_PORT=7072
@@ -87,9 +87,9 @@ services:
 
   traffic-analytics-service-3:
     container_name: traffic-analytics-service-3
-    # image: eugencic/traffic-analytics-service:latest
-    build:
-      context: ./traffic-analytics/traffic-analytics-service
+    image: eugencic/traffic-analytics-service:latest
+#    build:
+#      context: ./traffic-analytics/traffic-analytics-service
     environment:
       - SERVICE_NAME=traffic-analytics-service-3
       - SERVICE_PORT=7073
@@ -109,9 +109,9 @@ services:
 
   traffic-regulation-service-1:
     container_name: traffic-regulation-service-1
-    # image: eugencic/traffic-regulation-service:latest
-    build:
-      context: ./traffic-regulation/traffic-regulation-service
+    image: eugencic/traffic-regulation-service:latest
+#    build:
+#      context: ./traffic-regulation/traffic-regulation-service
     environment:
       - SERVICE_NAME=traffic-regulation-service-1
       - SERVICE_PORT=8081
@@ -131,9 +131,9 @@ services:
 
   traffic-regulation-service-2:
     container_name: traffic-regulation-service-2
-    # image: eugencic/traffic-regulation-service:latest
-    build:
-      context: ./traffic-regulation/traffic-regulation-service
+    image: eugencic/traffic-regulation-service:latest
+#    build:
+#      context: ./traffic-regulation/traffic-regulation-service
     environment:
       - SERVICE_NAME=traffic-regulation-service-2
       - SERVICE_PORT=8082
@@ -153,9 +153,9 @@ services:
 
   traffic-regulation-service-3:
     container_name: traffic-regulation-service-3
-    # image: eugencic/traffic-regulation-service:latest
-    build:
-      context: ./traffic-regulation/traffic-regulation-service
+    image: eugencic/traffic-regulation-service:latest
+#    build:
+#      context: ./traffic-regulation/traffic-regulation-service
     environment:
       - SERVICE_NAME=traffic-regulation-service-3
       - SERVICE_PORT=8083
@@ -175,9 +175,9 @@ services:
 
   traffic-analytics-load-balancer:
     container_name: traffic-analytics-load-balancer
-#    image: eugencic/traffic-analytics-load-balancer:latest
-    build:
-      context: ./traffic-analytics/traffic-analytics-load-balancer
+    image: eugencic/traffic-analytics-load-balancer:latest
+#    build:
+#      context: ./traffic-analytics/traffic-analytics-load-balancer
     ports:
       - "7000:7000"
     restart: always
@@ -195,9 +195,9 @@ services:
 
   traffic-regulation-load-balancer:
     container_name: traffic-regulation-load-balancer
-    # image: eugencic/traffic-regulation-load-balancer:latest
-    build:
-      context: ./traffic-regulation/traffic-regulation-load-balancer
+    image: eugencic/traffic-regulation-load-balancer:latest
+#    build:
+#      context: ./traffic-regulation/traffic-regulation-load-balancer
     ports:
       - "8000:8000"
     restart: always
@@ -215,9 +215,9 @@ services:
 
   gateway:
     container_name: gateway
-    # image: eugencic/gateway:latest
-    build:
-      context: ./gateway
+    image: eugencic/gateway:latest
+#    build:
+#      context: ./gateway
     ports:
       - "6060:6060"
     restart: always
@@ -233,9 +233,9 @@ services:
 
   coordinator:
     container_name: coordinator
-    # image: eugencic/coordinator:latest
-    build:
-      context: ./coordinator
+    image: eugencic/coordinator:latest
+#    build:
+#      context: ./coordinator
     ports:
       - "6061:6061"
     restart: always

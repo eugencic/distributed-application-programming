@@ -39,7 +39,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     GET http://localhost:6060/get_traffic_analytics_service_status
     ```
 
-  - Send data for analytics (should be accessed first to add some data):
+  - Send data for analytics (should be accessed first to add some data; the date when the container was created will be considered today's date):
 
     ```
     POST http://localhost:6060/receive_data_for_analytics
@@ -48,7 +48,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
       "signal_status_1": 1,
       "vehicle_count": 5,
       "incident": true,
-      "date": "2023-10-24",
+      "date": "2023-12-07",
       "time": "07:10"
     }
     ```
@@ -86,7 +86,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     GET http://localhost:6060/get_traffic_regulation_service_status
     ```
 
-  - Send data for logs (should be accessed first to add some data; in order to make logs, signal_status_1 has to be 1 and vehicle_count > 30, or signal_status_1 has to be 2 and vehicle_count < 5):
+  - Send data for logs (should be accessed first to add some data; the date when the container was created will be considered today's date; in order to make logs, signal_status_1 has to be 1 and vehicle_count > 30, or signal_status_1 has to be 2 and vehicle_count < 5):
 
     ```
     POST http://localhost:6060/receive_data_for_logs 
@@ -95,7 +95,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
       "signal_status_1": 1,
       "vehicle_count": 31,
       "incident": true,
-      "date": "2023-10-24",
+      "date": "2023-12-07",
       "time": "07:10"
     }
     ```
@@ -123,7 +123,7 @@ Also check the [Postman collection](https://github.com/eugencic/distributed-appl
     ```
     POST http://localhost:6061/add_data
     {
-      "id": 1,
+      "intersection_id": 1,
       "message": "Sample message"
     }
     ```

@@ -1,7 +1,8 @@
 import grpc
 from concurrent.futures import ThreadPoolExecutor, wait
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 import requests
+from prometheus_client import Counter, generate_latest, REGISTRY
 import traffic_analytics_pb2
 import traffic_analytics_pb2_grpc
 import traffic_regulation_pb2
@@ -12,6 +13,7 @@ app = Flask(__name__)
 service_discovery_endpoint = "http://service-discovery:9090"
 coordinator_name = "coordinator"
 coordinator_port = 6061
+requests_counter = Counter('coordinator_requests_total', 'Requests')
 
 
 def register_load_balancer(service_name, service_host, service_port):
@@ -124,8 +126,14 @@ def saga_coordinator(intersection_id, message):
             return 500
 
 
+@app.route('/metrics')
+def metrics():
+    return Response(generate_latest(REGISTRY), content_type='text/plain')
+
+
 @app.route('/add_data', methods=['POST'])
 def add_data():
+    requests_counter.inc()
     try:
         data = request.json
         intersection_id = data.get('intersection_id')

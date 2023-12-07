@@ -306,9 +306,17 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 cursor.execute(query, (request.intersection_id, datetime.now().strftime('%Y-%m-%d')))
                 results = cursor.fetchall()
                 print("Retrieved data:", results)
+                times = [result[1] for result in results]
+                if not times:
+                    response = traffic_analytics_pb2.TrafficAnalyticsResponse()
+                    response.intersection_id = request.intersection_id
+                    response.timestamp = datetime.now().isoformat()
+                    response.average_vehicle_count = 0
+                    response.peak_hours = 'No data available'
+                    response.average_incidents = 0
+                    return response
                 total_vehicle_count = 0
                 total_incidents = 0
-                times = [result[1] for result in results]
                 for result in results:
                     total_vehicle_count += result[0]
                     if result[2]:
@@ -411,9 +419,17 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 ))
                 results = cursor.fetchall()
                 print("Retrieved data for the last week:", results)
+                times = [result[1] for result in results]
+                if not times:
+                    response = traffic_analytics_pb2.TrafficAnalyticsResponse()
+                    response.intersection_id = request.intersection_id
+                    response.timestamp = datetime.now().isoformat()
+                    response.average_vehicle_count = 0
+                    response.peak_hours = 'No data available'
+                    response.average_incidents = 0
+                    return response
                 total_vehicle_count = 0
                 total_incidents = 0
-                times = [result[1] for result in results]
                 for result in results:
                     total_vehicle_count += result[0]
                     if result[2]:
@@ -516,9 +532,17 @@ class TrafficAnalyticsServicer(traffic_analytics_pb2_grpc.TrafficAnalyticsServic
                 ))
                 results = cursor.fetchall()
                 print("Retrieved data for the last week for predictions:", results)
+                times = [result[1] for result in results]
+                if not times:
+                    response = traffic_analytics_pb2.TrafficAnalyticsResponse()
+                    response.intersection_id = request.intersection_id
+                    response.timestamp = datetime.now().isoformat()
+                    response.average_vehicle_count = 0
+                    response.peak_hours = 'No data available'
+                    response.average_incidents = 0
+                    return response
                 total_vehicle_count = 0
                 total_incidents = 0
-                times = [result[1] for result in results]
                 for result in results:
                     total_vehicle_count += result[0]
                     if result[2]:
