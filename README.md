@@ -1,6 +1,4 @@
-# Laboratory work Nr.2: Logically Linked DBs
-
-## Intelligent Traffic Light Control System
+# Intelligent Traffic Light Control System
 
 > **Performed by:** Eugeniu Popa, FAF-202
 
